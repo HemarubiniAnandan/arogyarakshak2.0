@@ -1,0 +1,114 @@
+{
+  "docs": [
+    {
+      "doctor_id": "DOC-C846F1",
+      "facility_id": "FAC-DEMO-002",
+      "name": "doc1",
+      "specialty": "General Medicine",
+      "phone": "76789765443",
+      "status": "available",
+      "blood_group": null,
+      "years_experience": null,
+      "home_visit": 1,
+      "created_at": "2026-09-07 06:02:22"
+    },
+    {
+      "doctor_id": "DOC-DEMO-001",
+      "facility_id": "FAC-DEMO-001",
+      "name": "Dr. Meera Joshi",
+      "specialty": "General Medicine",
+      "phone": null,
+      "status": "available",
+      "blood_group": null,
+      "years_experience": null,
+      "home_visit": 1,
+      "created_at": "2026-09-07 06:18:13"
+    },
+    {
+      "doctor_id": "DOC-DEMO-002",
+      "facility_id": "FAC-DEMO-001",
+      "name": "Dr. Anil Patil",
+      "specialty": "Obstetrics",
+      "phone": null,
+      "status": "available",
+      "blood_group": null,
+      "years_experience": null,
+      "home_visit": 1,
+      "created_at": "2026-09-07 06:18:13"
+    },
+    {
+      "doctor_id": "DOC-DEMO-003",
+      "facility_id": "FAC-DEMO-001",
+      "name": "Dr. Priya Kulkarni",
+      "specialty": "Pediatrics",
+      "phone": null,
+      "status": "available",
+      "blood_group": null,
+      "years_experience": null,
+      "home_visit": 1,
+      "created_at": "2026-09-07 06:18:13"
+    }
+  ],
+  "avail": [
+    {
+      "id": "e7c6b483-cad9-4d00-8037-9646693ad274",
+      "doctor_id": "DOC-DEMO-001",
+      "facility_id": "FAC-DEMO-001",
+      "date": "46273.2292824074",
+      "slot": "09:00",
+      "status": "available",
+      "updated_by": null,
+      "updated_at": "2026-09-07 06:19:47"
+    },
+    {
+      "id": "9dd00fc8-69de-41fd-a7a9-91f52dc91b15",
+      "doctor_id": "DOC-DEMO-001",
+      "facility_id": "FAC-DEMO-001",
+      "date": "46273.2292824074",
+      "slot": "09:30",
+      "status": "available",
+      "updated_by": null,
+      "updated_at": "2026-09-07 06:19:47"
+    },
+    {
+      "id": "9d115dce-42ef-438f-a297-b1e7ad5cd6a0",
+      "doctor_id": "DOC-DEMO-001",
+      "facility_id": "FAC-DEMO-001",
+      "date": "46273.2292824074",
+      "slot": "10:00",
+      "status": "available",
+      "updated_by": null,
+      "updated_at": "2026-09-07 06:19:47"
+    },
+    {
+      "id": "d31cf426-4b3d-464d-8ebc-405ff0af5044",
+      "doctor_id": "DOC-DEMO-002",
+      "facility_id": "FAC-DEMO-001",
+      "date": "46273.2292824074",
+      "slot": "10:00",
+      "status": "available",
+      "updated_by": null,
+      "updated_at": "2026-09-07 06:19:47"
+    },
+    {
+      "id": "ab50c29a-664a-4e39-9a83-de2a69a7ce37",
+      "doctor_id": "DOC-DEMO-002",
+      "facility_id": "FAC-DEMO-001",
+      "date": "46273.2292824074",
+      "slot": "10:30",
+      "status": "unavailable",
+      "updated_by": null,
+      "updated_at": "2026-09-07 06:19:47"
+    },
+    {
+      "id": "dd744840-1495-4213-9dff-b5ef92950404",
+      "doctor_id": "DOC-DEMO-003",
+      "facility_id": "FAC-DEMO-001",
+      "date": "46274.2292824074",
+      "slot": "09:00",
+      "status": "available",
+      "updated_by": null,
+      "updated_at": "2026-09-07 06:19:47"
+    }
+  ]
+}

@@ -1,0 +1,2959 @@
+client\src\components\AppointmentTrackerStepper.jsx:1 -> import React from 'react';
+
+/**
+ * Amazon Shipping-Style Progress Stepper Component
+ * 
+ * Stages:
+ * 1. Booked (Appointment Token Generated)
+ * 2. Desk Arrived (Facility Reception Desk Checked-In)
+ * 3. Visited Doctor (Entered OPD Consultation Desk)
+ * 4. Prescription Attached (Doctor Completed Diagnosis & Prescribed Medicines)
+ * 5. Pharmacy Completed (Medicines Dispensed / Care Completed)
+ */
+export default function AppointmentTrackerStepper({ appointment }) {
+  if (!appointment) return null;
+
+  // Determine stage flags based on database fields
+  const isBooked = true; // Always booked if record exists
+  const isArrived = !!appointment.arrived_at;
+  const isVisitedDoctor = !!appointment.seen_at || isArrived && appointment.status === 'completed';
+  const isPrescriptionAttached = !!(appointment.prescription && appointment.prescription.trim().length > 0);
+  const isCompleted = appointment.status === 'completed' || isPrescriptionAttached;
+
+  let currentStageIndex = 0;
+  if (isCompleted) currentStageIndex = 4;
+  else if (isPrescriptionAttached) currentStageIndex = 3;
+  else if (isVisitedDoctor) currentStageIndex = 2;
+  else if (isArrived) currentStageIndex = 1;
+  else if (isBooked) currentStageIndex = 0;
+
+  const steps = [
+    { label: 'Token Booked', subtitle: appointment.time || 'Scheduled' },
+    { label: 'Desk Arrived', subtitle: isArrived ? appointment.arrived_at.split('T')[1]?.slice(0,5) || 'Checked-In' : 'Pending Check-In' },
+    { label: 'Visited Doctor', subtitle: isVisitedDoctor ? 'In Consultation' : 'Waiting Room' },
+    { label: 'e-Prescription', subtitle: isPrescriptionAttached ? 'Attached' : 'Pending Prescribe' },
+    { label: 'Care Completed', subtitle: isCompleted ? 'Fulfilled' : 'In Progress' },
+  ];
+
+  // Calculate active line width percentage: 0%, 25%, 50%, 75%, 100%
+  const progressPercent = (currentStageIndex / (steps.length - 1)) * 100;
+
+  return (
+    <div style={{ backgroundColor: '#FAFBFD', padding: '16px 12px', borderRadius: '8px', border: '1px solid var(--gov-border)', margin: '12px 0' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+        <div style={{ fontSize: '0.82rem', fontWeight: '800', color: 'var(--gov-blue-primary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+          OPD Care Journey Progress Tracker (Token #{appointment.token_number || 'N/A'})
+        </div>
+        <span className={`gov-badge ${isCompleted ? 'gov-badge-fresh' : isArrived ? 'gov-badge-aging' : 'gov-badge-stale'}`}>
+          Status: {appointment.status?.toUpperCase() || 'BOOKED'}
+        </span>
+      </div>
+
+      <div className="stepper-wrapper">
+        <div className="stepper-progress-line" />
+        <div className="stepper-progress-active-line" style={{ width: `${progressPercent}%` }} />
+
+        {steps.map((step, index) => {
+          const isDone = index <= currentStageIndex;
+          const isCurrent = index === currentStageIndex;
+
+          return (
+            <div key={index} className={`stepper-step ${isDone ? 'completed' : ''} ${isCurrent ? 'current' : ''}`}>
+              <div className="stepper-circle">
+                {isDone && index < currentStageIndex ? '✓' : index + 1}
+              </div>
+              <div>
+                <div className="stepper-title" style={{ color: isDone ? 'var(--gov-blue-primary)' : 'var(--gov-text-muted)' }}>
+                  {step.label}
+                </div>
+                <div className="stepper-subtitle">{step.subtitle}</div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}\nclient\src\components\Footer.jsx:1 -> import React from 'react';
+import { Link } from 'react-router-dom';
+
+export default function Footer() {
+  return (
+    <footer style={{ backgroundColor: '#001A33', color: '#B0C4DE', borderTop: '4px solid var(--gov-saffron)', marginTop: '40px', padding: '30px 0 20px 0', fontSize: '0.85rem' }}>
+      <div className="gov-container">
+        <div className="gov-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '25px', marginBottom: '25px' }}>
+          <div>
+            <h4 style={{ color: '#FFFFFF', fontSize: '1rem', marginBottom: '10px' }}>AarogyaRakshak 2.0 Portal</h4>
+            <p style={{ color: '#8A9EA8', lineHeight: '1.5' }}>
+              Public Health Department, Government of Maharashtra.<br />
+              Offline-first digital healthcare continuity platform for rural primary health centres and community care.
+            </p>
+          </div>
+
+          <div>
+            <h4 style={{ color: '#FFFFFF', fontSize: '1rem', marginBottom: '10px' }}>Emergency Helplines</h4>
+            <ul style={{ listStyle: 'none', padding: 0, margin: 0, lineHeight: '1.8' }}>
+              <li><strong>108</strong> — National Ambulance Service</li>
+              <li><strong>104</strong> — Health Information &amp; Advice</li>
+              <li><strong>1098</strong> — Child Helpline</li>
+              <li><strong>181</strong> — Women Helpline</li>
+            </ul>
+          </div>
+
+          <div>
+            <h4 style={{ color: '#FFFFFF', fontSize: '1rem', marginBottom: '10px' }}>Governance Links</h4>
+            <ul style={{ listStyle: 'none', padding: 0, margin: 0, lineHeight: '1.8' }}>
+              <li><Link to="/about" style={{ color: '#B0C4DE', textDecoration: 'none' }}>About System Architecture</Link></li>
+              <li><Link to="/support" style={{ color: '#B0C4DE', textDecoration: 'none' }}>District Help Desk Roster</Link></li>
+              <li><Link to="/faq" style={{ color: '#B0C4DE', textDecoration: 'none' }}>Frequently Asked Questions</Link></li>
+              <li><Link to="/sos" style={{ color: '#FF6B6B', textDecoration: 'none', fontWeight: 'bold' }}>Emergency SOS Escalation</Link></li>
+            </ul>
+          </div>
+        </div>
+
+        <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '15px', textAlign: 'center', color: '#6C7D8C', fontSize: '0.8rem' }}>
+          Content Managed by Public Health Department, Government of Maharashtra &copy; {new Date().getFullYear()}. All Rights Reserved.
+        </div>
+      </div>
+    </footer>
+  );
+}\nclient\src\components\Header.jsx:1 -> import React, { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+
+export default function Header({ user, onLogout }) {
+  const navigate = useNavigate();
+  const [lang, setLang] = useState('en');
+
+  const handleLanguageChange = (newLang) => {
+    setLang(newLang);
+    window.dispatchEvent(new CustomEvent('languageChange', { detail: newLang }));
+  };
+
+  return (
+    <header style={{ borderBottom: '1px solid var(--uwin-border)' }}>
+      {/* Top Tricolor Strip */}
+      <div className="gov-tricolor-strip"></div>
+
+      {/* Top Accessibility Bar */}
+      <div className="gov-top-bar">
+        <div className="gov-top-bar-left">
+          <span>Government of Maharashtra — Public Health Department</span>
+          <span>National Health Mission (U-WIN Portal)</span>
+        </div>
+
+        <div className="gov-top-bar-right" style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+            <span style={{ fontSize: '0.75rem', color: '#D4AF37', fontWeight: 'bold' }}>Language:</span>
+            <select
+              value={lang}
+              onChange={(e) => handleLanguageChange(e.target.value)}
+              style={{
+                backgroundColor: 'var(--uwin-navy-dark)',
+                color: '#FFFFFF',
+                border: '1px solid var(--uwin-teal)',
+                borderRadius: '4px',
+                padding: '2px 8px',
+                fontSize: '0.75rem',
+                cursor: 'pointer',
+                fontWeight: 'bold',
+              }}
+            >
+              <option value="en">English</option>
+              <option value="hi">हिंदी (Hindi)</option>
+              <option value="mr">मराठी (Marathi)</option>
+            </select>
+          </div>
+
+          <div>
+            <button>A-</button>
+            <button>A</button>
+            <button>A+</button>
+          </div>
+        </div>
+      </div>
+
+      {/* Main U-WIN Government Header */}
+      <div className="gov-header">
+        <div className="gov-brand">
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            {/* AarogyaRakshak Official Logo */}
+            <img 
+              src="/aarogya-logo.jpg" 
+              alt="AarogyaRakshak Logo" 
+              style={{ height: '56px', width: '56px', objectFit: 'cover', borderRadius: '50%', backgroundColor: '#FFFFFF', padding: '2px', border: '2px solid #D4AF37', boxShadow: '0 2px 6px rgba(0,0,0,0.3)' }} 
+              onError={(e) => {
+                e.target.style.display = 'none';
+                e.target.nextElementSibling.style.display = 'flex';
+              }}
+            />
+            {/* Fallback pattern if image is missing */}
+            <div style={{ display: 'none', width: '56px', height: '56px', backgroundColor: '#FFFFFF', borderRadius: '50%', alignItems: 'center', justifyContent: 'center', padding: '2px', border: '2px solid #D4AF37', boxShadow: '0 2px 6px rgba(0,0,0,0.3)' }}>
+              <span style={{color: '#0F2E5A', fontWeight: 'bold', fontSize: '10px'}}>LOGO 1</span>
+            </div>
+
+            {/* Ministry of Health & Family Welfare Logo */}
+            <img 
+              src="/mohfw-logo.jpg" 
+              alt="MoHFW Logo" 
+              style={{ height: '46px', objectFit: 'contain' }} 
+              onError={(e) => {
+                e.target.style.display = 'none';
+                e.target.nextElementSibling.style.display = 'flex';
+              }}
+            />
+            {/* Fallback pattern if image is missing */}
+            <div style={{ display: 'none', height: '46px', alignItems: 'center', padding: '0 10px', backgroundColor: '#FFF', border: '1px dashed #CCC', fontSize: '12px' }}>
+              LOGO 2 (Save as mohfw-logo.jpg in client/public)
+            </div>
+          </div>
+
+          <div className="gov-title-block">
+            <h1>AarogyaRakshak 2.0</h1>
+            <p>U-WIN Rural Health Interoperability &amp; Digital Health Ecosystem</p>
+          </div>
+        </div>
+
+        {/* Navigation Toolbar */}
+        <nav className="gov-nav">
+          <Link to="/" className="gov-nav-link">
+            Home
+          </Link>
+          <Link to="/about" className="gov-nav-link">
+            About Portal
+          </Link>
+          <Link to="/support" className="gov-nav-link">
+            Support &amp; Helplines
+          </Link>
+          <Link to="/faq" className="gov-nav-link">
+            FAQ
+          </Link>
+
+          {user ? (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginLeft: '12px' }}>
+              <span style={{ fontSize: '0.85rem', color: '#D4AF37', fontWeight: 'bold' }}>
+                {user.name} ({user.role?.toUpperCase()})
+              </span>
+              <button
+                onClick={onLogout}
+                className="gov-btn gov-btn-danger"
+                style={{ padding: '5px 12px', fontSize: '0.8rem' }}
+              >
+                Logout
+              </button>
+            </div>
+          ) : (
+            <Link
+              to="/login"
+              className="gov-btn gov-btn-teal"
+              style={{ marginLeft: '12px', padding: '7px 18px', fontSize: '0.88rem' }}
+            >
+              Portal Login / Register
+            </Link>
+          )}
+        </nav>
+      </div>
+    </header>
+  );
+}\nclient\src\components\PrescriptionPdfModal.jsx:2 -> ').filter(line => line.trim().length > 0);
+  };
+
+  const rxLines = parsePrescriptionLines(appointment.prescription);
+
+  return (
+    <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(5, 22, 44, 0.75)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2200, backdropFilter: 'blur(5px)' }}>
+      <div className="gov-card" style={{ width: '90%', maxWidth: '780px', maxHeight: '90vh', overflowY: 'auto', margin: 0, backgroundColor: '#FFFFFF', borderRadius: '8px', boxShadow: '0 20px 40px rgba(0,0,0,0.3)', border: '2px solid var(--gov-blue-primary)' }}>
+        
+        {/* Top Control Bar (Hidden when printing) */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '2px solid var(--gov-border)', paddingBottom: '12px', marginBottom: '20px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <span className="gov-badge gov-badge-fresh" style={{ fontSize: '0.8rem' }}>OFFICIAL E-PRESCRIPTION</span>
+            <span style={{ fontSize: '0.82rem', color: 'var(--gov-text-muted)' }}>ABDM &amp; eSanjeevani Interoperable Format</span>
+          </div>
+          <div style={{ display: 'flex', gap: '10px' }}>
+            <button onClick={handlePrint} className="gov-btn gov-btn-primary" style={{ padding: '4px 12px', fontSize: '0.82rem' }}>
+              🖨️ Print / Save as PDF
+            </button>
+            <button onClick={onClose} className="gov-btn gov-btn-secondary" style={{ padding: '4px 10px', fontSize: '0.82rem' }}>
+              ✕ Close
+            </button>
+          </div>
+        </div>
+
+        {/* Printable Official Government Header */}
+        <div id="printablePrescription" style={{ padding: '10px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '3px solid var(--gov-blue-primary)', paddingBottom: '12px', marginBottom: '16px' }}>
+            <div>
+              <div style={{ fontSize: '0.78rem', color: 'var(--gov-saffron)', fontWeight: '800', letterSpacing: '1px', textTransform: 'uppercase' }}>
+                Public Health Department — Government of Maharashtra
+              </div>
+              <h2 style={{ color: 'var(--gov-blue-primary)', fontSize: '1.4rem', margin: '2px 0' }}>
+                {appointment.facility_name || 'Primary Health Centre Karad (PHC Karad)'}
+              </h2>
+              <p style={{ fontSize: '0.82rem', color: 'var(--gov-text-muted)' }}>
+                District Satara, Maharashtra | OPD Consultation Desk
+              </p>
+            </div>
+            <div style={{ textAlign: 'right' }}>
+              <div style={{ fontSize: '1.2rem', fontWeight: '800', color: 'var(--gov-blue-primary)' }}>Rx</div>
+              <div style={{ fontSize: '0.78rem', color: 'var(--gov-text-muted)' }}>Token: #{appointment.token_number || '001'}</div>
+              <div style={{ fontSize: '0.78rem', color: 'var(--gov-text-muted)' }}>Date: {appointment.date || new Date().toISOString().split('T')[0]}</div>
+            </div>
+          </div>
+
+          {/* Doctor & Patient Info Block */}
+          <div className="gov-grid-2" style={{ backgroundColor: '#F8FAFC', padding: '12px 16px', borderRadius: '6px', border: '1px solid var(--gov-border)', marginBottom: '20px', fontSize: '0.88rem' }}>
+            <div>
+              <div style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: 'var(--gov-text-muted)', fontWeight: 'bold' }}>PATIENT DEMOGRAPHICS</div>
+              <strong>Name:</strong> {appointment.patient_name || 'Sunanda Kamble'}<br/>
+              <strong>ABHA ID:</strong> {appointment.abha_id || 'ABHA-SYNTH-001'}<br/>
+              <strong>Phone:</strong> {appointment.patient_phone || '+919876500101'}<br/>
+              <strong>Symptoms:</strong> <em>{appointment.symptoms || 'General Checkup'}</em>
+            </div>
+            <div>
+              <div style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: 'var(--gov-text-muted)', fontWeight: 'bold' }}>CONSULTING MEDICAL OFFICER</div>
+              <strong>Doctor:</strong> {appointment.doctor_name || 'Dr. Meera Joshi'}<br/>
+              <strong>Specialty:</strong> {appointment.doctor_specialty || 'General Medicine'}<br/>
+              <strong>OPD Visit ID:</strong> {appointment.appointment_id}<br/>
+              <strong>Triage Pathway:</strong> <span className="gov-badge gov-badge-aging">{appointment.triage_pathway || 'general'}</span>
+            </div>
+          </div>
+
+          {/* Pre-Exam & Clinical Remarks */}
+          <div style={{ marginBottom: '20px' }}>
+            {appointment.remarks_open && (
+              <div style={{ marginBottom: '10px' }}>
+                <strong style={{ fontSize: '0.85rem', color: 'var(--gov-blue-primary)' }}>Open Remarks (Pre-Examination):</strong>
+                <p style={{ fontSize: '0.88rem', backgroundColor: '#FFF', padding: '8px 12px', borderRadius: '4px', border: '1px solid var(--gov-border)', marginTop: '4px' }}>
+                  {appointment.remarks_open}
+                </p>
+              </div>
+            )}
+            {appointment.remarks_close && (
+              <div>
+                <strong style={{ fontSize: '0.85rem', color: 'var(--gov-blue-primary)' }}>Clinical Diagnosis &amp; Close Observations:</strong>
+                <p style={{ fontSize: '0.88rem', backgroundColor: '#FFF', padding: '8px 12px', borderRadius: '4px', border: '1px solid var(--gov-border)', marginTop: '4px' }}>
+                  {appointment.remarks_close}
+                </p>
+              </div>
+            )}
+          </div>
+
+          {/* Medication Table */}
+          <div style={{ marginBottom: '24px' }}>
+            <h4 style={{ color: 'var(--gov-blue-primary)', borderBottom: '2px solid var(--gov-blue-bg)', paddingBottom: '6px', marginBottom: '10px' }}>
+              Digital e-Prescription (Medications &amp; Dosage Instructions)
+            </h4>
+
+            {rxLines.length === 0 ? (
+              <p style={{ fontSize: '0.88rem', color: 'var(--gov-text-muted)' }}>No prescription medications attached.</p>
+            ) : (
+              <table className="gov-table">
+                <thead>
+                  <tr>
+                    <th style={{ width: '40px' }}>#</th>
+                    <th>Prescribed Medication Details</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {rxLines.map((line, idx) => (
+                    <tr key={idx}>
+                      <td><strong>{idx + 1}</strong></td>
+                      <td><strong style={{ color: 'var(--gov-blue-dark)' }}>{line}</strong></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+
+          {/* Footer Signature Block */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', paddingTop: '20px', borderTop: '2px dashed var(--gov-border)' }}>
+            <div>
+              <div style={{ fontSize: '0.78rem', color: 'var(--gov-text-muted)' }}>eSanjeevani Interoperability Code: ESJ-MH-2026-901</div>
+              <div style={{ fontSize: '0.78rem', color: 'var(--gov-text-muted)' }}>Verification QR Signature: Digitally Certified</div>
+            </div>
+            <div style={{ textAlign: 'center', borderTop: '1px solid var(--gov-border-strong)', paddingTop: '4px', minWidth: '200px' }}>
+              <strong>{appointment.doctor_name || 'Dr. Meera Joshi'}</strong><br/>
+              <span style={{ fontSize: '0.78rem', color: 'var(--gov-text-muted)' }}>Medical Officer (Reg. MH-48912)</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  );
+}\nclient\src\components\QrScannerModal.jsx:1 -> import React, { useState } from 'react';
+
+/**
+ * Interactive QR Code Scanner Modal
+ * Supports:
+ * 1. Live Camera Scan simulation / HTML5 Camera feed
+ * 2. Upload QR Code Image File
+ * 3. Manual Token Code Input
+ */
+export default function QrScannerModal({ title, subtitle, onScanSuccess, onClose }) {
+  const [tokenInput, setTokenInput] = useState('');
+  const [activeTab, setActiveTab] = useState('camera'); // 'camera' | 'upload' | 'manual'
+  const [scanMessage, setScanMessage] = useState('');
+
+  const handleManualSubmit = (e) => {
+    e.preventDefault();
+    if (!tokenInput.trim()) return;
+    onScanSuccess(tokenInput.trim());
+  };
+
+  const handleFileUpload = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    // Simulate scanning uploaded QR image file
+    setScanMessage(`Scanning ${file.name}... QR Payload Extracted Successfully!`);
+    setTimeout(() => {
+      // Mock extract token ID from image file or name
+      const mockExtractedId = 'APT-DEMO-001';
+      onScanSuccess(mockExtractedId);
+    }, 800);
+  };
+
+  const handleSimulateCameraScan = () => {
+    setScanMessage('Scanning QR Code via Optical Camera Feed...');
+    setTimeout(() => {
+      onScanSuccess('APT-DEMO-001');
+    }, 1000);
+  };
+
+  return (
+    <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(5, 22, 44, 0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2000, backdropFilter: 'blur(4px)' }}>
+      <div className="gov-card" style={{ width: '90%', maxWidth: '520px', margin: 0, borderRadius: '12px', border: '2px solid var(--gov-blue-primary)' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '2px solid var(--gov-blue-bg)', paddingBottom: '12px', marginBottom: '16px' }}>
+          <div>
+            <h3 style={{ color: 'var(--gov-blue-primary)', margin: 0 }}>{title || 'QR Code Token Scanner'}</h3>
+            <p style={{ fontSize: '0.82rem', color: 'var(--gov-text-muted)', marginTop: '2px' }}>
+              {subtitle || 'Scan patient appointment QR code or enter token ID'}
+            </p>
+          </div>
+          <button onClick={onClose} className="gov-btn gov-btn-secondary" style={{ padding: '4px 10px', fontSize: '0.8rem' }}>
+            ✕ Close
+          </button>
+        </div>
+
+        {/* Tab Switcher */}
+        <div style={{ display: 'flex', gap: '8px', marginBottom: '16px', borderBottom: '1px solid var(--gov-border)', pb: '8px' }}>
+          {[
+            { id: 'camera', label: '📷 Camera Scanner' },
+            { id: 'upload', label: '📁 Upload QR Image' },
+            { id: 'manual', label: '⌨️ Manual Token' },
+          ].map(tab => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              style={{
+                flex: 1,
+                padding: '8px 4px',
+                fontSize: '0.82rem',
+                fontWeight: '700',
+                border: 'none',
+                borderBottom: activeTab === tab.id ? '3px solid var(--gov-blue-primary)' : '3px solid transparent',
+                backgroundColor: activeTab === tab.id ? 'var(--gov-blue-bg)' : 'transparent',
+                color: activeTab === tab.id ? 'var(--gov-blue-primary)' : 'var(--gov-text-muted)',
+                cursor: 'pointer',
+                borderRadius: '4px 4px 0 0',
+              }}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Tab 1: Camera Scanner Simulation */}
+        {activeTab === 'camera' && (
+          <div style={{ textAlign: 'center', padding: '20px 10px' }}>
+            <div style={{ width: '220px', height: '220px', margin: '0 auto 16px auto', border: '3px dashed var(--gov-blue-accent)', borderRadius: '12px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', backgroundColor: '#F8FAFC', position: 'relative', overflow: 'hidden' }}>
+              <div style={{ fontSize: '3rem', marginBottom: '8px' }}>📷</div>
+              <div style={{ fontSize: '0.8rem', color: 'var(--gov-text-muted)', padding: '0 10px' }}>
+                Position QR Code within optical viewfinder box
+              </div>
+              <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '3px', backgroundColor: 'var(--gov-saffron)', animation: 'scanLine 2s infinite linear' }} />
+            </div>
+
+            {scanMessage && (
+              <p style={{ fontSize: '0.85rem', color: 'var(--gov-emerald)', fontWeight: 'bold', marginBottom: '12px' }}>
+                {scanMessage}
+              </p>
+            )}
+
+            <button onClick={handleSimulateCameraScan} className="gov-btn gov-btn-primary" style={{ width: '100%' }}>
+              Capture Camera View &amp; Verify QR Code
+            </button>
+          </div>
+        )}
+
+        {/* Tab 2: Upload QR Image */}
+        {activeTab === 'upload' && (
+          <div style={{ padding: '20px 10px', textAlign: 'center' }}>
+            <div style={{ border: '2px dashed var(--gov-border-strong)', padding: '30px 15px', borderRadius: '8px', backgroundColor: '#F8FAFC' }}>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleFileUpload}
+                id="qrImageFileInput"
+                style={{ display: 'none' }}
+              />
+              <label htmlFor="qrImageFileInput" className="gov-btn gov-btn-primary" style={{ cursor: 'pointer', marginBottom: '10px' }}>
+                Choose QR Image File
+              </label>
+              <p style={{ fontSize: '0.8rem', color: 'var(--gov-text-muted)' }}>
+                Upload PNG, JPG, or PDF containing patient QR Token
+              </p>
+            </div>
+
+            {scanMessage && (
+              <p style={{ fontSize: '0.85rem', color: 'var(--gov-emerald)', fontWeight: 'bold', marginTop: '12px' }}>
+                {scanMessage}
+              </p>
+            )}
+          </div>
+        )}
+
+        {/* Tab 3: Manual Input */}
+        {activeTab === 'manual' && (
+          <form onSubmit={handleManualSubmit} style={{ padding: '10px 0' }}>
+            <div className="gov-form-group">
+              <label className="gov-label">Appointment Token ID or Patient ABHA ID *</label>
+              <input
+                type="text"
+                className="gov-input"
+                required
+                placeholder="e.g. APT-DEMO-001 or ABHA-SYNTH-001"
+                value={tokenInput}
+                onChange={(e) => setTokenInput(e.target.value)}
+              />
+            </div>
+            <button type="submit" className="gov-btn gov-btn-success" style={{ width: '100%' }}>
+              Verify &amp; Check-In Patient ->
+            </button>
+          </form>
+        )}
+      </div>
+
+      <style>{`
+        @keyframes scanLine {
+          0% { top: 0; }
+          50% { top: 100%; }
+          100% { top: 0; }
+        }
+      `}</style>
+    </div>
+  );
+}\nclient\src\components\SimulatedBadge.jsx:1 -> import React from 'react';
+
+export default function SimulatedBadge({ adapterName }) {
+  return (
+    <span className="gov-badge gov-badge-simulated" title="Simulated government API response for hackathon demo">
+      Simulated — {adapterName}
+    </span>
+  );
+}\nclient\src\views\AppointmentBooking.jsx:1 -> import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import QRCode from 'qrcode';
+
+export default function AppointmentBooking({ user }) {
+  const [step, setStep] = useState(1);
+  const [patient, setPatient] = useState(null);
+
+  // Step 2 Form — Interactive Toggle Switch for Visit Type
+  const [visitType, setVisitType] = useState('new');
+  const [mobilityNeeds, setMobilityNeeds] = useState('can_stand');
+  const [symptoms, setSymptoms] = useState('');
+  const [homeVisit, setHomeVisit] = useState(false);
+
+  // Step 3 Triage Result
+  const [triageResult, setTriageResult] = useState(null);
+
+  // Step 4 Doctor selection
+  const [availableDoctors, setAvailableDoctors] = useState([]);
+  const [selectedDoctor, setSelectedDoctor] = useState(null);
+
+  // Step 5 Slot Selection
+  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+  const [availableSlots, setAvailableSlots] = useState([]);
+  const [selectedSlot, setSelectedSlot] = useState(null);
+
+  // Booking Result & QR Data URL
+  const [bookingResult, setBookingResult] = useState(null);
+  const [qrDataUrl, setQrDataUrl] = useState('');
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    fetch('http://localhost:3001/api/patients', {
+      headers: { 'Authorization': `Bearer ${user.token}` },
+    })
+      .then((res) => res.json())
+      .then((list) => {
+        if (list && list.length > 0) setPatient(list[0]);
+      })
+      .catch(() => {});
+  }, [user]);
+
+  const handleRunTriage = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      const res = await fetch('http://localhost:3001/api/triage', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          symptoms,
+          patientContext: {
+            age: patient?.age,
+            thresholdBreached: false,
+          },
+        }),
+      });
+      const data = await res.json();
+      setTriageResult(data);
+
+      fetchDoctors(data.suggested_specialty);
+      setStep(3);
+    } catch (err) {
+      console.error('Triage error:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchDoctors = async (specialty) => {
+    try {
+      const res = await fetch(`http://localhost:3001/api/appointments/doctors/available?specialty=${specialty || ''}&home_visit=${homeVisit ? '1' : ''}`, {
+        headers: { 'Authorization': `Bearer ${user.token}` },
+      });
+      const docs = await res.json();
+      if (Array.isArray(docs)) {
+        setAvailableDoctors(docs);
+      } else {
+        setAvailableDoctors([]);
+        console.error('API returned non-array:', docs);
+      }
+    } catch (err) {
+      console.error('Fetch doctors error:', err);
+      setAvailableDoctors([]);
+    }
+  };
+
+  const handleSelectDoctor = (doc) => {
+    setSelectedDoctor(doc);
+    fetchSlots(doc.doctor_id, selectedDate);
+    setStep(4);
+  };
+
+  const fetchSlots = async (docId, dateStr) => {
+    try {
+      const res = await fetch(`http://localhost:3001/api/appointments/slots/${docId}/${dateStr}`, {
+        headers: { 'Authorization': `Bearer ${user.token}` },
+      });
+      const slots = await res.json();
+      setAvailableSlots(slots);
+    } catch (err) {
+      console.error('Fetch slots error:', err);
+    }
+  };
+
+  const handleConfirmBooking = async () => {
+    setLoading(true);
+    try {
+      const body = {
+        patient_id: patient?.patient_id || 'PATIENT-DEMO-001',
+        doctor_id: selectedDoctor.doctor_id,
+        facility_id: selectedDoctor.facility_id,
+        date: selectedDate,
+        time: selectedSlot.slot,
+        visit_type: visitType,
+        mobility_needs: mobilityNeeds,
+        home_visit: homeVisit ? 1 : 0,
+        symptoms,
+        triage_pathway: triageResult?.pathway,
+        triage_risk: triageResult?.risk_level,
+      };
+
+      const res = await fetch('http://localhost:3001/api/appointments', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${user.token}`,
+        },
+        body: JSON.stringify(body),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Booking failed.');
+
+      // Generate QR Code data URL
+      const qrPayload = JSON.stringify({
+        appointment_id: data.appointment_id,
+        token_number: data.token_number,
+        patient_name: patient?.name || user.name,
+        facility: selectedDoctor.facility_name,
+        doctor: selectedDoctor.name,
+        date: selectedDate,
+        time: selectedSlot.slot,
+      });
+
+      QRCode.toDataURL(qrPayload, { width: 220, margin: 2 }, (err, url) => {
+        if (!err) setQrDataUrl(url);
+      });
+
+      const phone = patient?.phone || '+919876500040';
+      const smsBody = `AarogyaRakshak Booking Confirmed! Token #${data.token_number} at ${selectedDoctor.facility_name} on ${selectedDate} at ${selectedSlot.slot}. Doctor: ${selectedDoctor.name}.`;
+      await fetch('http://localhost:3001/api/notifications/sms', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ to: phone, body: smsBody }),
+      });
+
+      const voiceMsg = `Namaskar ${patient?.name || 'Citizen'}, aapka appointment Dr. ${selectedDoctor.name} ke saath ${selectedDate} ko samay ${selectedSlot.slot} par confirm ho gaya hai. Token number ${data.token_number} hai. Dhanyavaad.`;
+      await fetch('http://localhost:3001/api/notifications/voice', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ to: phone, message: voiceMsg, language: 'hi-IN' }),
+      });
+
+      setBookingResult(data);
+      setStep(6);
+    } catch (err) {
+      alert(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="gov-container" style={{ maxWidth: '850px' }}>
+      <div className="gov-card">
+        <div className="gov-card-header">
+          <div className="gov-card-title">Smart Appointment Booking Portal</div>
+          <div style={{ fontSize: '0.85rem', color: 'var(--uwin-text-muted)' }}>Step {step} of 6</div>
+        </div>
+
+        {/* Profile Autofill Banner */}
+        <div style={{ backgroundColor: 'var(--uwin-teal-light)', border: '1px solid var(--uwin-teal)', padding: '14px', borderRadius: '8px', marginBottom: '22px', fontSize: '0.88rem' }}>
+          <strong>Autofilled Patient Record:</strong> {patient?.name || user.name} | Age: {patient?.age || '45'} | Blood Group: <span className="gov-badge gov-badge-aging">{patient?.blood_group || 'O+'}</span> | Chronic: {patient?.chronic_conditions || 'None'} | Allergies: {patient?.allergies || 'None'}
+        </div>
+
+        {/* Step 1 Form */}
+        {step === 1 && (
+          <form onSubmit={handleRunTriage}>
+            <h4 style={{ color: 'var(--uwin-navy)', marginBottom: '16px' }}>Step 2 — Consultation Details &amp; Symptoms</h4>
+
+            <div className="gov-grid-2" style={{ alignItems: 'center' }}>
+              <div className="gov-form-group">
+                <label className="gov-label">Visit Type Category *</label>
+                {/* Interactive Toggle Switch replacing dropdown */}
+                <div className="uwin-toggle-container">
+                  <button
+                    type="button"
+                    className={`uwin-toggle-btn ${visitType === 'new' ? 'active' : ''}`}
+                    onClick={() => setVisitType('new')}
+                  >
+                    New Patient Visit
+                  </button>
+                  <button
+                    type="button"
+                    className={`uwin-toggle-btn ${visitType === 'follow_up' ? 'active' : ''}`}
+                    onClick={() => setVisitType('follow_up')}
+                  >
+                    Follow-Up Visit
+                  </button>
+                </div>
+              </div>
+
+              <div className="gov-form-group">
+                <label className="gov-label">Patient Mobility Needs</label>
+                <select className="gov-select" value={mobilityNeeds} onChange={(e) => setMobilityNeeds(e.target.value)}>
+                  <option value="can_stand">Can walk / stand independently</option>
+                  <option value="needs_wheelchair">Needs Wheelchair assistance</option>
+                  <option value="stretcher">Stretcher support required</option>
+                  <option value="ambulance">Emergency Ambulance transport needed</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="gov-form-group">
+              <label className="gov-label">Describe Symptoms or Health Issue *</label>
+              <textarea
+                className="gov-textarea"
+                rows="3"
+                required
+                placeholder="e.g. High fever for 3 days, severe headache, breathing difficulty..."
+                value={symptoms}
+                onChange={(e) => setSymptoms(e.target.value)}
+              ></textarea>
+            </div>
+
+            <div className="gov-form-group" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <input
+                type="checkbox"
+                id="homeVisit"
+                checked={homeVisit}
+                onChange={(e) => setHomeVisit(e.target.checked)}
+              />
+              <label htmlFor="homeVisit" className="gov-label" style={{ marginBottom: 0, cursor: 'pointer' }}>
+                Request Home Visit (Searches doctors flagged for home visits using patient's village address)
+              </label>
+            </div>
+
+            <button type="submit" className="gov-btn gov-btn-teal" style={{ marginTop: '15px' }} disabled={loading}>
+              {loading ? 'Running Triage Assist...' : 'Run Smart Triage Assist ->'}
+            </button>
+          </form>
+        )}
+
+        {/* Step 3: Triage Result */}
+        {step === 3 && triageResult && (
+          <div>
+            <h4 style={{ color: 'var(--uwin-navy)', marginBottom: '15px' }}>Step 3 — Smart Triage Assist Output</h4>
+            <div style={{ backgroundColor: '#FEF3C7', borderLeft: '4px solid #D97706', padding: '12px 16px', borderRadius: '4px', marginBottom: '18px', fontSize: '0.85rem' }}>
+              Rule-based Triage Assist: This system assists routing based on Maharashtra health protocol rules.
+            </div>
+
+            <div className="gov-grid-2" style={{ marginBottom: '20px' }}>
+              <div className="gov-stat-box">
+                <div className="gov-stat-label">Suggested Pathway</div>
+                <div className="gov-stat-number" style={{ fontSize: '1.4rem' }}>{triageResult.pathway.toUpperCase()}</div>
+              </div>
+              <div className="gov-stat-box" style={{ borderLeftColor: triageResult.risk_level === 'emergency' ? 'var(--uwin-danger)' : 'var(--uwin-emerald)' }}>
+                <div className="gov-stat-label">Assessed Risk Level</div>
+                <div className="gov-stat-number" style={{ fontSize: '1.4rem', color: triageResult.risk_level === 'emergency' ? 'var(--uwin-danger)' : 'var(--uwin-emerald)' }}>
+                  {triageResult.risk_level.toUpperCase()}
+                </div>
+              </div>
+            </div>
+
+            <h5>Rule Match Explanation:</h5>
+            <ul style={{ paddingLeft: '20px', margin: '10px 0 20px 0', fontSize: '0.88rem' }}>
+              {triageResult.matched_rules.map((rule, idx) => (
+                <li key={idx}>{rule}</li>
+              ))}
+            </ul>
+
+            <button onClick={() => setStep(4)} className="gov-btn gov-btn-teal">
+              View Ranked Matching Doctors &rarr;
+            </button>
+          </div>
+        )}
+
+        {/* Step 4: Doctors Selection */}
+        {(step === 4 || (step === 3 && availableDoctors.length > 0)) && (
+          <div>
+            <h4 style={{ color: 'var(--uwin-navy)', marginBottom: '15px' }}>Step 4 — Available Doctors (Ranked by Match, Distance &amp; Readiness)</h4>
+
+            {availableDoctors.length === 0 ? (
+              <p style={{ color: 'var(--uwin-text-muted)' }}>No doctors available for this criteria right now.</p>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                {availableDoctors.map((doc) => (
+                  <div key={doc.doctor_id} style={{ border: '1px solid var(--uwin-border)', padding: '16px', borderRadius: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: selectedDoctor?.doctor_id === doc.doctor_id ? 'var(--uwin-teal-light)' : '#FFFFFF' }}>
+                    <div>
+                      <h4 style={{ color: 'var(--uwin-navy)' }}>{doc.name} ({doc.specialty})</h4>
+                      <p style={{ fontSize: '0.88rem', color: 'var(--uwin-text-muted)', marginTop: '4px' }}>
+                        Facility: <strong>{doc.facility_name}</strong> | Readiness Score: <strong>{doc.readiness_score}/10</strong> | Exp: {doc.years_experience || 5} yrs {doc.home_visit ? ' | Home Visit Available' : ''}
+                      </p>
+                    </div>
+                    <button onClick={() => handleSelectDoctor(doc)} className="gov-btn gov-btn-teal">
+                      Select Doctor &amp; View Slots &rarr;
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Step 5: Calendar Date & Slot Picker with Booked Slots Disabled */}
+        {step === 4 && selectedDoctor && (
+          <div style={{ marginTop: '25px', paddingTop: '20px', borderTop: '2px solid var(--uwin-border)' }}>
+            <h4 style={{ color: 'var(--uwin-navy)', marginBottom: '15px' }}>Step 5 — Select Date &amp; Time Slot</h4>
+
+            <div className="gov-form-group" style={{ maxWidth: '300px' }}>
+              <label className="gov-label">Consultation Date</label>
+              <input
+                type="date"
+                className="gov-input"
+                value={selectedDate}
+                onChange={(e) => {
+                  setSelectedDate(e.target.value);
+                  fetchSlots(selectedDoctor.doctor_id, e.target.value);
+                }}
+              />
+            </div>
+
+            <h5>Available Slots for Dr. {selectedDoctor.name}:</h5>
+            <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', margin: '15px 0' }}>
+              {availableSlots.length === 0 ? (
+                <p style={{ color: 'var(--uwin-text-muted)', fontSize: '0.88rem' }}>No slots found for selected date.</p>
+              ) : (
+                availableSlots.map((s) => {
+                  const isBooked = s.status !== 'available';
+                  return (
+                    <button
+                      key={s.id}
+                      disabled={isBooked}
+                      onClick={() => setSelectedSlot(s)}
+                      style={{
+                        padding: '9px 16px',
+                        borderRadius: '6px',
+                        border: selectedSlot?.id === s.id ? '2px solid var(--uwin-navy)' : '1px solid var(--uwin-border)',
+                        backgroundColor: isBooked ? '#F1F5F9' : selectedSlot?.id === s.id ? 'var(--uwin-navy)' : '#FFFFFF',
+                        color: isBooked ? '#94A3B8' : selectedSlot?.id === s.id ? '#FFFFFF' : 'var(--uwin-text-dark)',
+                        cursor: isBooked ? 'not-allowed' : 'pointer',
+                        fontWeight: '700',
+                        fontSize: '0.88rem',
+                        opacity: isBooked ? 0.6 : 1,
+                      }}
+                    >
+                      {s.slot} {isBooked ? '(Booked)' : ''}
+                    </button>
+                  );
+                })
+              )}
+            </div>
+
+            {selectedSlot && (
+              <button onClick={() => setStep(5)} className="gov-btn gov-btn-success" style={{ marginTop: '10px' }}>
+                Proceed to Confirmation &rarr;
+              </button>
+            )}
+          </div>
+        )}
+
+        {/* Step 6: Confirmation Screen */}
+        {step === 5 && selectedDoctor && selectedSlot && (
+          <div>
+            <h4 style={{ color: 'var(--uwin-navy)', marginBottom: '15px' }}>Step 6 — Double-Confirm Appointment Booking</h4>
+
+            <div style={{ border: '2px solid var(--uwin-navy)', padding: '20px', borderRadius: '8px', backgroundColor: '#F8FAFC', marginBottom: '20px' }}>
+              <p><strong>Patient Name:</strong> {patient?.name || user.name}</p>
+              <p><strong>Assigned Doctor:</strong> {selectedDoctor.name} ({selectedDoctor.specialty})</p>
+              <p><strong>Health Facility:</strong> {selectedDoctor.facility_name}</p>
+              <p><strong>Date &amp; Time:</strong> {selectedDate} at {selectedSlot.slot}</p>
+              <p><strong>Visit Type:</strong> <span className="gov-badge gov-badge-aging">{visitType === 'new' ? 'NEW VISIT' : 'FOLLOW-UP VISIT'}</span> | Mobility: {mobilityNeeds.replace('_', ' ')}</p>
+              <p><strong>Symptoms Logged:</strong> {symptoms}</p>
+              <p style={{ marginTop: '10px', fontSize: '0.85rem', color: 'var(--uwin-text-muted)' }}>
+                On confirmation, an SMS token with QR link and an automated voice call confirmation will be dispatched to <strong>{patient?.phone || '+919876500040'}</strong> via notification adapter.
+              </p>
+            </div>
+
+            <div style={{ display: 'flex', gap: '15px' }}>
+              <button onClick={() => setStep(4)} className="gov-btn gov-btn-secondary">&lt;- Back to Slot Selection</button>
+              <button onClick={handleConfirmBooking} className="gov-btn gov-btn-success" disabled={loading}>
+                {loading ? 'Locking Booking & Dispatching Notifications...' : 'Confirm & Lock Appointment'}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Final Booking Success with Generated Visual QR Code */}
+        {step === 6 && bookingResult && (
+          <div style={{ textAlign: 'center', padding: '20px 0' }}>
+            <h3 style={{ color: 'var(--uwin-navy)', marginBottom: '10px' }}>Appointment Successfully Booked!</h3>
+            <p style={{ fontSize: '1.1rem', marginBottom: '15px' }}>
+              Token Number: <strong style={{ color: 'var(--uwin-teal)', fontSize: '1.4rem' }}>#{bookingResult.token_number}</strong> | Appointment ID: <strong>{bookingResult.appointment_id}</strong>
+            </p>
+
+            {/* Graphical QR Code */}
+            {qrDataUrl && (
+              <div style={{ margin: '20px 0' }}>
+                <img src={qrDataUrl} alt="Appointment QR Code" style={{ border: '2px solid var(--uwin-navy)', padding: '10px', borderRadius: '8px', backgroundColor: '#FFFFFF', boxShadow: 'var(--uwin-shadow-md)' }} />
+                <p style={{ fontSize: '0.82rem', color: 'var(--uwin-text-muted)', marginTop: '6px' }}>
+                  Show or print this QR Code at the PHC reception desk for instant check-in.
+                </p>
+              </div>
+            )}
+
+            <div style={{ backgroundColor: 'var(--uwin-emerald-bg)', color: 'var(--uwin-emerald)', padding: '14px', borderRadius: '8px', display: 'inline-block', marginBottom: '20px', fontSize: '0.9rem', fontWeight: 'bold' }}>
+              Automated SMS token and voice confirmation dispatched via Twilio integration adapter!
+            </div>
+
+            <div>
+              <button onClick={() => navigate('/patient')} className="gov-btn gov-btn-teal">
+                Return to Patient Dashboard
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}\nclient\src\views\AshaDashboard.jsx:1 -> import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import AppointmentTrackerStepper from '../components/AppointmentTrackerStepper';
+import PrescriptionPdfModal from '../components/PrescriptionPdfModal';
+
+export default function AshaDashboard({ user }) {
+  const [patients, setPatients] = useState([]);
+  const [priorityFlags, setPriorityFlags] = useState([]);
+  const [appointments, setAppointments] = useState([]);
+  const [activeTab, setActiveTab] = useState('queue');
+  const [loading, setLoading] = useState(true);
+
+  // Dynamic filter state from stat cards
+  const [statFilter, setStatFilter] = useState('all');
+
+  // Search Filter state
+  const [searchQuery, setSearchQuery] = useState('');
+
+  // Auto-Suggest Booking state for ASHA
+  const [patientSearchInput, setPatientSearchInput] = useState('');
+  const [selectedPatient, setSelectedPatient] = useState(null);
+  const [bookingSymptoms, setBookingSymptoms] = useState('');
+  const [homeVisitRequested, setHomeVisitRequested] = useState(false);
+
+  // Dynamic Patient History View Modal State
+  const [viewHistoryPatient, setViewHistoryPatient] = useState(null);
+  const [patientHistoryDetail, setPatientHistoryDetail] = useState(null);
+
+  // Prescription Modal State
+  const [selectedPrescriptionApt, setSelectedPrescriptionApt] = useState(null);
+
+  // Call Patient 2-Step Modal State
+  const [callModalApt, setCallModalApt] = useState(null);
+  const [callAttended, setCallAttended] = useState(null);
+  const [patientFeedback, setPatientFeedback] = useState('');
+  const [rating, setRating] = useState('5');
+  const [completedFollowUps, setCompletedFollowUps] = useState({});
+
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    fetchDashboardData();
+  }, [user]);
+
+  const fetchDashboardData = async () => {
+    setLoading(true);
+    try {
+      const pRes = await fetch('http://localhost:3001/api/patients', {
+        headers: { 'Authorization': `Bearer ${user.token}` },
+      });
+      const pData = await pRes.json();
+      setPatients(pData);
+
+      const pfRes = await fetch('http://localhost:3001/api/priority-flags', {
+        headers: { 'Authorization': `Bearer ${user.token}` },
+      });
+      const pfData = await pfRes.json();
+      setPriorityFlags(pfData);
+
+      const aptRes = await fetch('http://localhost:3001/api/appointments', {
+        headers: { 'Authorization': `Bearer ${user.token}` },
+      });
+      const aptData = await aptRes.json();
+      setAppointments(aptData);
+    } catch (err) {
+      console.error('ASHA dashboard fetch error:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleOpenPatientHistory = async (patient) => {
+    setViewHistoryPatient(patient);
+    try {
+      const res = await fetch(`http://localhost:3001/api/patients/${patient.patient_id}`, {
+        headers: { 'Authorization': `Bearer ${user.token}` },
+      });
+      const detail = await res.json();
+      setPatientHistoryDetail(detail);
+    } catch (err) {
+      console.error('Failed to fetch patient history:', err);
+      setPatientHistoryDetail(patient);
+    }
+  };
+
+  const handleResolveFlag = async (flagId) => {
+    try {
+      await fetch(`http://localhost:3001/api/priority-flags/${flagId}/resolve`, {
+        method: 'PUT',
+        headers: { 'Authorization': `Bearer ${user.token}` },
+      });
+      fetchDashboardData();
+    } catch (err) {
+      alert('Failed to resolve flag');
+    }
+  };
+
+  const filteredPatients = patients.filter(p => {
+    const query = searchQuery.trim().toLowerCase();
+    if (!query) return true;
+    return (
+      (p.name && p.name.toLowerCase().includes(query)) ||
+      (p.village && p.village.toLowerCase().includes(query)) ||
+      (p.phone && p.phone.includes(query))
+    );
+  });
+
+  const autoSuggestedPatients = patientSearchInput.trim() ? patients.filter(p => {
+    const q = patientSearchInput.trim().toLowerCase();
+    return (
+      (p.name && p.name.toLowerCase().includes(q)) ||
+      (p.phone && p.phone.includes(q))
+    );
+  }) : [];
+
+  const handleCallSubmit = (e) => {
+    e.preventDefault();
+    if (!callModalApt) return;
+
+    if (callAttended === false) {
+      alert(`Recorded: Call to ${callModalApt.patient_name || 'Patient'} was not attended. Task remains pending for retry.`);
+      setCallModalApt(null);
+      setCallAttended(null);
+      return;
+    }
+
+    setCompletedFollowUps(prev => ({ ...prev, [callModalApt.appointment_id]: { feedback: patientFeedback, rating } }));
+    alert(`Feedback logged! Follow-up marked completed for token #${callModalApt.token_number}.`);
+    setCallModalApt(null);
+    setCallAttended(null);
+    setPatientFeedback('');
+  };
+
+  return (
+    <div className="gov-container">
+      {/* Header Stat Box */}
+      <div className="gov-card" style={{ borderLeft: '6px solid var(--uwin-teal)', backgroundColor: 'var(--uwin-teal-light)' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px' }}>
+          <div>
+            <h2 style={{ color: 'var(--uwin-navy)' }}>ASHA Worker Operations &amp; Rural Health Desk</h2>
+            <p style={{ fontSize: '0.88rem', color: 'var(--uwin-text-muted)', marginTop: '4px' }}>
+              Logged as: <strong>{user.name}</strong> | Catchment Area: <strong>Umbraj &amp; Masur Villages</strong> | Facility: <strong>PHC Karad</strong>
+            </p>
+          </div>
+          <button onClick={() => navigate('/register')} className="gov-btn gov-btn-teal">
+            + Register New Rural Patient
+          </button>
+        </div>
+      </div>
+
+      {/* Priority Stat Counters */}
+      <div className="gov-grid" style={{ marginBottom: '22px' }}>
+        <div
+          className="gov-stat-box"
+          style={{ borderLeftColor: 'var(--uwin-danger)', cursor: 'pointer', backgroundColor: statFilter === 'priority' ? '#FEF2F2' : '#FFFFFF' }}
+          onClick={() => { setStatFilter('priority'); setActiveTab('queue'); }}
+        >
+          <div className="gov-stat-number" style={{ color: 'var(--uwin-danger)' }}>{priorityFlags.length}</div>
+          <div className="gov-stat-label">Priority Escalations Due</div>
+        </div>
+
+        <div
+          className="gov-stat-box"
+          style={{ borderLeftColor: 'var(--uwin-navy)', cursor: 'pointer', backgroundColor: statFilter === 'patients' ? '#F1F5F9' : '#FFFFFF' }}
+          onClick={() => { setStatFilter('patients'); setActiveTab('patients'); }}
+        >
+          <div className="gov-stat-number" style={{ color: 'var(--uwin-navy)' }}>{patients.length}</div>
+          <div className="gov-stat-label">Assigned Rural Patients</div>
+        </div>
+
+        <div
+          className="gov-stat-box"
+          style={{ borderLeftColor: 'var(--uwin-emerald)', cursor: 'pointer', backgroundColor: statFilter === 'appointments' ? 'var(--uwin-emerald-bg)' : '#FFFFFF' }}
+          onClick={() => { setStatFilter('appointments'); setActiveTab('shipment'); }}
+        >
+          <div className="gov-stat-number" style={{ color: 'var(--uwin-emerald)' }}>{appointments.length}</div>
+          <div className="gov-stat-label">Appointments Tracked</div>
+        </div>
+      </div>
+
+      {/* Workspace Tabs */}
+      <div className="gov-card">
+        <div style={{ display: 'flex', gap: '6px', borderBottom: '2px solid var(--uwin-border)', marginBottom: '22px', overflowX: 'auto' }}>
+          {[
+            { id: 'queue', label: 'Priority Escalation Queue' },
+            { id: 'patients', label: 'Patient Roster & Care Passport' },
+            { id: 'assisted_booking', label: 'Assisted Appointment Booking' },
+            { id: 'shipment', label: 'Appointment Stepper & Call Log' },
+          ].map(t => (
+            <button
+              key={t.id}
+              onClick={() => { setActiveTab(t.id); setStatFilter('all'); }}
+              style={{
+                padding: '10px 16px',
+                border: 'none',
+                borderBottom: activeTab === t.id ? '3px solid var(--uwin-navy)' : '3px solid transparent',
+                backgroundColor: activeTab === t.id ? '#F1F5F9' : 'transparent',
+                color: activeTab === t.id ? 'var(--uwin-navy)' : 'var(--uwin-text-dark)',
+                fontWeight: activeTab === t.id ? '800' : '600',
+                cursor: 'pointer',
+                fontSize: '0.88rem',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Tab 1: Priority Queue */}
+        {activeTab === 'queue' && (
+          <div>
+            <h4 style={{ color: 'var(--uwin-navy)', marginBottom: '10px' }}>
+              Priority Queue (Ranked by Risk Category, Aging &amp; Outreach History)
+            </h4>
+            <p style={{ fontSize: '0.85rem', color: 'var(--uwin-text-muted)', marginBottom: '15px' }}>
+              High-risk cases requiring immediate home visits or follow-up calls from ASHA worker.
+            </p>
+
+            {priorityFlags.length === 0 ? (
+              <p style={{ color: 'var(--uwin-text-muted)' }}>All priority cases resolved.</p>
+            ) : (
+              <table className="gov-table">
+                <thead>
+                  <tr>
+                    <th>Rank</th>
+                    <th>Patient Name</th>
+                    <th>Village</th>
+                    <th>Category</th>
+                    <th>Reason &amp; Clinical Label</th>
+                    <th>Urgency Level</th>
+                    <th>Score</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {priorityFlags.map((flag, idx) => {
+                    const score = flag.priority_score || flag.score || 120;
+                    let urgencyBadge = 'gov-badge-aging';
+                    if (score >= 180) urgencyBadge = 'gov-badge-stale';
+
+                    return (
+                      <tr key={flag.id}>
+                        <td><strong>#{idx + 1}</strong></td>
+                        <td><strong>{flag.patient_name}</strong> ({flag.patient_phone})</td>
+                        <td>{flag.village}</td>
+                        <td>
+                          <span className={`gov-badge ${flag.category === 'maternal' ? 'gov-badge-stale' : 'gov-badge-aging'}`}>
+                            {flag.category?.toUpperCase() || 'GENERAL'}
+                          </span>
+                        </td>
+                        <td>{flag.reason_label}</td>
+                        <td>
+                          <span className={`gov-badge ${urgencyBadge}`}>
+                            {flag.urgency_level || (score >= 180 ? 'CRITICAL' : score >= 130 ? 'URGENT' : 'HIGH')}
+                          </span>
+                        </td>
+                        <td><strong>{score} pts</strong></td>
+                        <td>
+                          <button
+                            onClick={() => handleResolveFlag(flag.id)}
+                            className="gov-btn gov-btn-success"
+                            style={{ padding: '3px 10px', fontSize: '0.78rem' }}
+                          >
+                            Mark Resolved
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            )}
+          </div>
+        )}
+
+        {/* Tab 2: Patient Roster & Dynamic Medical History Passport */}
+        {activeTab === 'patients' && (
+          <div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '10px' }}>
+              <div>
+                <h4 style={{ color: 'var(--uwin-navy)' }}>Assigned Catchment Patient Roster</h4>
+                <p style={{ fontSize: '0.82rem', color: 'var(--uwin-text-muted)', marginTop: '2px' }}>
+                  Click any patient to view their dynamic medical history, appointment progress steppers, and e-prescriptions.
+                </p>
+              </div>
+              <div style={{ width: '320px' }}>
+                <input
+                  type="text"
+                  className="gov-input"
+                  placeholder="Search patient by name, village, phone..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+              </div>
+            </div>
+
+            {/* List View of Patient Cards */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              {filteredPatients.length === 0 ? (
+                <p style={{ color: 'var(--uwin-text-muted)' }}>No matching patient records found.</p>
+              ) : (
+                filteredPatients.map(p => (
+                  <div
+                    key={p.patient_id}
+                    style={{
+                      border: '1px solid var(--uwin-border)',
+                      borderRadius: '8px',
+                      padding: '16px',
+                      backgroundColor: '#FFFFFF',
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      flexWrap: 'wrap',
+                      gap: '12px',
+                      boxShadow: 'var(--uwin-shadow-sm)',
+                    }}
+                  >
+                    <div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <h4 style={{ color: 'var(--uwin-navy)', margin: 0 }}>{p.name}</h4>
+                        <span className="gov-badge gov-badge-aging">ABHA: {p.abha_id || 'ABHA-SYNTH-001'}</span>
+                        <span className="gov-badge gov-badge-fresh">Blood: {p.blood_group || 'B+'}</span>
+                      </div>
+                      <p style={{ fontSize: '0.85rem', color: 'var(--uwin-text-muted)', marginTop: '6px', margin: 0 }}>
+                        ID: <strong>{p.patient_id}</strong> | Village: <strong>{p.village || 'Umbraj'}</strong> | Phone: <strong>{p.phone || '+919876500101'}</strong> | Age: <strong>{p.age || 24}</strong>
+                      </p>
+                    </div>
+
+                    <div style={{ display: 'flex', gap: '10px' }}>
+                      <button
+                        onClick={() => handleOpenPatientHistory(p)}
+                        className="gov-btn gov-btn-teal"
+                        style={{ padding: '6px 14px', fontSize: '0.82rem' }}
+                      >
+                        View Dynamic Care Passport
+                      </button>
+                      <button
+                        onClick={() => {
+                          setSelectedPatient(p);
+                          setActiveTab('assisted_booking');
+                        }}
+                        className="gov-btn gov-btn-primary"
+                        style={{ padding: '6px 14px', fontSize: '0.82rem' }}
+                      >
+                        Book Appointment
+                      </button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Tab 3: Assisted Booking */}
+        {activeTab === 'assisted_booking' && (
+          <div style={{ maxWidth: '700px' }}>
+            <h4 style={{ color: 'var(--uwin-navy)', marginBottom: '15px' }}>
+              Assisted Appointment Booking on Behalf of Citizen
+            </h4>
+
+            <div className="gov-form-group" style={{ position: 'relative' }}>
+              <label className="gov-label">Search Patient Name or Phone (Auto-Suggest)</label>
+              <input
+                type="text"
+                className="gov-input"
+                placeholder="Type patient name (e.g. Sunanda, Lata)..."
+                value={selectedPatient ? selectedPatient.name : patientSearchInput}
+                onChange={(e) => {
+                  setPatientSearchInput(e.target.value);
+                  setSelectedPatient(null);
+                }}
+              />
+
+              {autoSuggestedPatients.length > 0 && !selectedPatient && (
+                <div style={{
+                  position: 'absolute',
+                  top: '100%',
+                  left: 0,
+                  right: 0,
+                  backgroundColor: '#FFFFFF',
+                  border: '1px solid var(--uwin-navy)',
+                  borderRadius: '6px',
+                  boxShadow: 'var(--uwin-shadow-md)',
+                  zIndex: 10,
+                  maxHeight: '200px',
+                  overflowY: 'auto',
+                }}>
+                  {autoSuggestedPatients.map(p => (
+                    <div
+                      key={p.patient_id}
+                      onClick={() => {
+                        setSelectedPatient(p);
+                        setPatientSearchInput(p.name);
+                      }}
+                      style={{
+                        padding: '10px 14px',
+                        cursor: 'pointer',
+                        borderBottom: '1px solid var(--uwin-border)',
+                        fontSize: '0.88rem',
+                      }}
+                    >
+                      <strong>{p.name}</strong> ({p.village}) — Phone: {p.phone || 'N/A'}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {selectedPatient && (
+              <div style={{ backgroundColor: 'var(--uwin-teal-light)', border: '1px solid var(--uwin-teal)', padding: '12px', borderRadius: '6px', marginBottom: '15px', fontSize: '0.88rem' }}>
+                Selected Patient: <strong>{selectedPatient.name}</strong> | ID: <strong>{selectedPatient.patient_id}</strong> | Village: <strong>{selectedPatient.village}</strong>
+              </div>
+            )}
+
+            <div className="gov-form-group">
+              <label className="gov-label">Symptoms / Health Reason</label>
+              <textarea
+                className="gov-textarea"
+                rows="3"
+                placeholder="Describe symptoms observed by ASHA worker..."
+                value={bookingSymptoms}
+                onChange={(e) => setBookingSymptoms(e.target.value)}
+              ></textarea>
+            </div>
+
+            <button
+              onClick={() => {
+                if (!selectedPatient) {
+                  alert('Please search and select a patient first.');
+                  return;
+                }
+                navigate(`/patient/book?patient_id=${selectedPatient.patient_id}&home_visit=${homeVisitRequested ? '1' : '0'}`);
+              }}
+              className="gov-btn gov-btn-teal"
+            >
+              Proceed to Slot Selection &amp; Doctor Match &rarr;
+            </button>
+          </div>
+        )}
+
+        {/* Tab 4: Appointment Stepper Tracker */}
+        {activeTab === 'shipment' && (
+          <div>
+            <h4 style={{ color: 'var(--uwin-navy)', marginBottom: '15px' }}>
+              Appointment Progress &amp; Follow-up Call Tracker
+            </h4>
+
+            {appointments.map(apt => (
+              <div key={apt.appointment_id} style={{ border: '1px solid var(--uwin-border)', borderRadius: '8px', padding: '16px', marginBottom: '16px', backgroundColor: '#FFFFFF' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div>
+                    <strong>Token #{apt.token_number || 1}</strong> — Patient: <strong>{apt.patient_name || 'Sunanda Kamble'}</strong> ({apt.patient_phone})<br/>
+                    <span style={{ fontSize: '0.85rem', color: 'var(--uwin-text-muted)' }}>Facility: {apt.facility_name || 'PHC Karad'} | Scheduled: {apt.date} {apt.time}</span>
+                  </div>
+                  <button
+                    onClick={() => {
+                      setCallModalApt(apt);
+                      setCallAttended(null);
+                    }}
+                    className="gov-btn gov-btn-teal"
+                    style={{ padding: '4px 12px', fontSize: '0.8rem' }}
+                  >
+                    Call Patient
+                  </button>
+                </div>
+                <AppointmentTrackerStepper appointment={apt} />
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Dynamic Patient Passport & Medical History Modal */}
+      {viewHistoryPatient && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(15, 46, 90, 0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+          <div className="gov-card" style={{ width: '90%', maxWidth: '820px', maxHeight: '90vh', overflowY: 'auto', margin: 0, borderRadius: '12px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '2px solid var(--uwin-border)', paddingBottom: '12px', marginBottom: '16px' }}>
+              <h3 style={{ color: 'var(--uwin-navy)', margin: 0 }}>
+                Patient Care Passport &amp; Medical History (Live DB)
+              </h3>
+              <button onClick={() => setViewHistoryPatient(null)} className="gov-btn gov-btn-secondary" style={{ padding: '4px 10px', fontSize: '0.8rem' }}>
+                ✕ Close
+              </button>
+            </div>
+
+            {/* Patient Header Block */}
+            <div style={{ backgroundColor: 'var(--uwin-teal-light)', border: '1px solid var(--uwin-teal)', padding: '14px', borderRadius: '8px', marginBottom: '16px', fontSize: '0.88rem' }}>
+              <strong>Patient Name:</strong> {viewHistoryPatient.name} | <strong>ABHA ID:</strong> {viewHistoryPatient.abha_id || 'ABHA-SYNTH-001'}<br />
+              <strong>Phone:</strong> {viewHistoryPatient.phone || '+919876500101'} | <strong>Village:</strong> {viewHistoryPatient.village || 'Umbraj'}<br />
+              <strong>Blood Group:</strong> <span className="gov-badge gov-badge-aging">{viewHistoryPatient.blood_group || 'B+'}</span> | <strong>Age:</strong> {viewHistoryPatient.age || 24}
+            </div>
+
+            {/* Pre-existing Profile */}
+            <h4 style={{ color: 'var(--uwin-navy)', marginBottom: '8px' }}>Pre-existing Chronic Profile &amp; Allergies</h4>
+            <div className="gov-grid-2" style={{ backgroundColor: '#F8FAFC', padding: '14px', borderRadius: '8px', border: '1px solid var(--uwin-border)', marginBottom: '20px', fontSize: '0.85rem' }}>
+              <div>
+                <p><strong>Chronic Conditions:</strong> {viewHistoryPatient.chronic_conditions || 'None reported'}</p>
+                <p><strong>Known Allergies:</strong> <span style={{ color: viewHistoryPatient.allergies ? 'var(--uwin-danger)' : 'inherit', fontWeight: 'bold' }}>{viewHistoryPatient.allergies || 'Penicillin'}</span></p>
+              </div>
+              <div>
+                <p><strong>Past Medications:</strong> {viewHistoryPatient.past_medications || 'Tab Paracetamol 500mg'}</p>
+                <p><strong>Disability Notes:</strong> {viewHistoryPatient.disability || 'None'}</p>
+              </div>
+            </div>
+
+            {/* Consultation History with Steppers */}
+            <h4 style={{ color: 'var(--uwin-navy)', marginBottom: '10px' }}>
+              Recent Consultations &amp; Progress Steppers
+            </h4>
+
+            {(!patientHistoryDetail?.appointments || patientHistoryDetail.appointments.length === 0) ? (
+              <p style={{ color: 'var(--uwin-text-muted)', fontSize: '0.88rem' }}>No past consultations recorded for this patient.</p>
+            ) : (
+              patientHistoryDetail.appointments.map(apt => (
+                <div key={apt.appointment_id} style={{ border: '1px solid var(--uwin-border)', borderRadius: '8px', padding: '14px', marginBottom: '14px', backgroundColor: '#FFFFFF' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div>
+                      <strong>Date:</strong> {apt.date} at {apt.time} | <strong>Doctor:</strong> {apt.doctor_name || 'Medical Officer'}
+                    </div>
+                    {apt.prescription && (
+                      <button
+                        onClick={() => setSelectedPrescriptionApt(apt)}
+                        className="gov-btn gov-btn-teal"
+                        style={{ padding: '2px 8px', fontSize: '0.75rem' }}
+                      >
+                        View PDF Prescription
+                      </button>
+                    )}
+                  </div>
+
+                  <AppointmentTrackerStepper appointment={apt} />
+                </div>
+              ))
+            )}
+
+            <div style={{ textAlign: 'right', marginTop: '20px' }}>
+              <button onClick={() => setViewHistoryPatient(null)} className="gov-btn gov-btn-teal">
+                Close Care Passport
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Official Government Prescription PDF Modal */}
+      {selectedPrescriptionApt && (
+        <PrescriptionPdfModal
+          appointment={selectedPrescriptionApt}
+          onClose={() => setSelectedPrescriptionApt(null)}
+        />
+      )}
+
+      {/* 2-Step Follow-Up Call Modal */}
+      {callModalApt && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(15,46,90,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+          <div className="gov-card" style={{ width: '90%', maxWidth: '550px', margin: 0, borderRadius: '12px' }}>
+            <h3 style={{ color: 'var(--uwin-navy)', marginBottom: '12px' }}>
+              Follow-Up Call Log: {callModalApt.patient_name || 'Patient'}
+            </h3>
+
+            <form onSubmit={handleCallSubmit}>
+              <div className="gov-form-group">
+                <label className="gov-label">Did the patient attend / answer the call? *</label>
+                <div style={{ display: 'flex', gap: '15px', marginTop: '6px' }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontWeight: 'bold' }}>
+                    <input
+                      type="radio"
+                      name="callAttended"
+                      required
+                      onChange={() => setCallAttended(true)}
+                    />
+                    Yes, Call Connected
+                  </label>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontWeight: 'bold', color: 'var(--uwin-danger)' }}>
+                    <input
+                      type="radio"
+                      name="callAttended"
+                      onChange={() => setCallAttended(false)}
+                    />
+                    No, Unreachable / Busy
+                  </label>
+                </div>
+              </div>
+
+              {callAttended === true && (
+                <div style={{ marginTop: '15px', paddingTop: '15px', borderTop: '1px dashed var(--uwin-border)' }}>
+                  <div className="gov-form-group">
+                    <label className="gov-label">Patient Feedback &amp; Review Remarks *</label>
+                    <textarea
+                      className="gov-textarea"
+                      rows="3"
+                      required
+                      placeholder="Enter patient feedback or satisfaction remarks..."
+                      value={patientFeedback}
+                      onChange={(e) => setPatientFeedback(e.target.value)}
+                    ></textarea>
+                  </div>
+                </div>
+              )}
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '20px' }}>
+                <button type="button" onClick={() => setCallModalApt(null)} className="gov-btn gov-btn-secondary">
+                  Cancel
+                </button>
+                <button type="submit" className="gov-btn gov-btn-teal">
+                  Submit Review
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}\nclient\src\views\FacilityDashboard.jsx:3 -> Status updated to 'ARRIVED'.`);
+      fetchAppointments();
+    } catch (err) {
+      alert('Error processing desk arrival QR verification.');
+    }
+  };
+
+  const handleFileUpload = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = async (evt) => {
+      try {
+        const bstr = evt.target.result;
+        const wb = XLSX.read(bstr, { type: 'binary' });
+        const wsname = wb.SheetNames[0];
+        const ws = wb.Sheets[wsname];
+        const data = XLSX.utils.sheet_to_json(ws);
+
+        if (!data || data.length === 0) {
+          alert('Excel file is empty or formatted incorrectly.');
+          return;
+        }
+
+        const payload = data.map(r => {
+          let dateStr = r.Date;
+          if (typeof dateStr === 'number') {
+            const dateObj = new Date(Math.round((dateStr - 25569) * 86400 * 1000));
+            dateStr = dateObj.toISOString().split('T')[0];
+          }
+          return { ...r, Date: dateStr };
+        }).filter(r => r.Doctor_ID && r.Date && r.Slot_Time);
+
+        const response = await fetch('http://localhost:3001/api/appointments/roster-upload', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${user.token}`
+          },
+          body: JSON.stringify({ data: payload }) // Send parsed rows
+        });
+
+        if (!response.ok) {
+          throw new Error('Server error during upload');
+        }
+
+        setUploadedDoctors(payload);
+        alert(`Successfully synchronized ${payload.length} roster slot rows into the U-WIN database!`);
+      } catch (err) {
+        console.error('File parsing/upload error:', err);
+        alert('Failed to process doctor roster. Make sure the backend is running and the format is correct.');
+      }
+    };
+    reader.readAsBinaryString(file);
+  };
+
+  // Dynamic Row Controls for Resource Table
+  const handleAddResourceRow = () => {
+    const name = prompt('Enter new Resource / Equipment / Bed Name:');
+    if (!name) return;
+    const type = prompt('Enter Category (Bed / Equipment / Staff):', 'Equipment') || 'Equipment';
+    const qty = parseInt(prompt('Enter Available Quantity:', '10')) || 10;
+    setResources([
+      ...resources,
+      { id: Date.now(), name, type, qty, status: 'Available' }
+    ]);
+  };
+
+  const handleDeleteResourceRow = (id) => {
+    if (resources.length <= 1) return;
+    setResources(resources.filter(r => r.id !== id));
+  };
+
+  const updateResourceQty = async (id, delta) => {
+    const updated = resources.map(r => r.id === id ? { ...r, qty: Math.max(0, r.qty + delta) } : r);
+    setResources(updated);
+  };
+
+  const toggleResourceStatus = (id) => {
+    setResources(resources.map(r => r.id === id ? { ...r, status: r.status === 'Available' ? 'Unavailable' : 'Available' } : r));
+  };
+
+  // Dynamic Row Controls for Vaccine Table
+  const handleAddVaccineRow = () => {
+    const name = prompt('Enter new Vaccine Name (e.g. Hepatitis B Booster):');
+    if (!name) return;
+    const target = prompt('Enter Target Group (e.g. Children 5-6 yrs):', 'General') || 'General';
+    const doses = parseInt(prompt('Enter Initial Vial Doses:', '100')) || 100;
+    setVaccines([
+      ...vaccines,
+      { id: Date.now(), name, target, doses, status: 'In Stock' }
+    ]);
+  };
+
+  const handleDeleteVaccineRow = (id) => {
+    if (vaccines.length <= 1) return;
+    setVaccines(vaccines.filter(v => v.id !== id));
+  };
+
+  const updateVaccineDoses = (id, delta) => {
+    setVaccines(vaccines.map(v => v.id === id ? { ...v, doses: Math.max(0, v.doses + delta) } : v));
+  };
+
+  const toggleVaccineStatus = (id) => {
+    setVaccines(vaccines.map(v => v.id === id ? { ...v, status: v.status === 'In Stock' ? 'Out of Stock' : 'In Stock' } : v));
+  };
+
+  const bookedCount = appointments.filter(a => a.status === 'booked' && !a.arrived_at).length;
+  const arrivedCount = appointments.filter(a => a.arrived_at && a.status !== 'completed').length;
+  const seenCount = appointments.filter(a => a.status === 'completed').length;
+
+  return (
+    <div className="gov-container">
+      {/* Facility Header Card */}
+      <div className="gov-card" style={{ borderLeft: '6px solid var(--uwin-navy)', backgroundColor: 'var(--uwin-teal-light)' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px' }}>
+          <div>
+            <h2 style={{ color: 'var(--uwin-navy)' }}>Facility Operations &amp; Dynamic Resource Desk</h2>
+            <p style={{ fontSize: '0.92rem', fontWeight: 'bold', color: 'var(--uwin-navy)', marginTop: '4px' }}>
+              Assigned Facility: {facility.name} ({facility.type})
+            </p>
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <button onClick={() => setShowQrModal(true)} className="gov-btn gov-btn-teal">
+              Open Reception Desk QR Camera
+            </button>
+            <button
+              onClick={handleToggleEmergency}
+              className={`gov-btn ${emergencyStatus ? 'gov-btn-success' : 'gov-btn-danger'}`}
+            >
+              {emergencyStatus ? 'ACCEPTING EMERGENCIES (ON)' : 'EMERGENCIES PAUSED (OFF)'}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Counters Bar */}
+      <div className="gov-grid" style={{ marginBottom: '22px' }}>
+        <div className="gov-stat-box" style={{ borderLeftColor: 'var(--uwin-navy)' }}>
+          <div className="gov-stat-number" style={{ color: 'var(--uwin-navy)' }}>{bookedCount}</div>
+          <div className="gov-stat-label">Booked Appointments (Awaiting)</div>
+        </div>
+        <div className="gov-stat-box" style={{ borderLeftColor: 'var(--uwin-teal)' }}>
+          <div className="gov-stat-number" style={{ color: 'var(--uwin-teal)' }}>{arrivedCount}</div>
+          <div className="gov-stat-label">Arrived at Reception Desk</div>
+        </div>
+        <div className="gov-stat-box" style={{ borderLeftColor: 'var(--uwin-emerald)' }}>
+          <div className="gov-stat-number" style={{ color: 'var(--uwin-emerald)' }}>{seenCount}</div>
+          <div className="gov-stat-label">Consultations Completed</div>
+        </div>
+      </div>
+
+      {/* Workspace Tabs */}
+      <div className="gov-card">
+        <div style={{ display: 'flex', gap: '6px', borderBottom: '2px solid var(--uwin-border)', marginBottom: '22px', overflowX: 'auto' }}>
+          {[
+            { id: 'resources', label: 'Beds & Resources (Dynamic Roster)' },
+            { id: 'vaccines', label: 'Vaccination Stock (U-WIN Portal)' },
+            { id: 'patients', label: 'Portal Registered Patients' },
+            { id: 'daily_tracker', label: 'Daily Assigned Patients & Progress' },
+            { id: 'excel', label: 'Doctor Schedule Excel Upload' },
+          ].map(t => (
+            <button
+              key={t.id}
+              onClick={() => setActiveTab(t.id)}
+              style={{
+                padding: '10px 16px',
+                border: 'none',
+                borderBottom: activeTab === t.id ? '3px solid var(--uwin-navy)' : '3px solid transparent',
+                backgroundColor: activeTab === t.id ? '#F1F5F9' : 'transparent',
+                color: activeTab === t.id ? 'var(--uwin-navy)' : 'var(--uwin-text-dark)',
+                fontWeight: activeTab === t.id ? '800' : '600',
+                cursor: 'pointer',
+                fontSize: '0.88rem',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Tab 1: Dynamic Equipment & Bed Resource Management */}
+        {activeTab === 'resources' && (
+          <div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <div>
+                <h4 style={{ color: 'var(--uwin-navy)', margin: 0 }}>
+                  Facility Equipment, Beds &amp; Personnel Readiness Desk
+                </h4>
+                <p style={{ fontSize: '0.82rem', color: 'var(--uwin-text-muted)', marginTop: '2px' }}>
+                  Manage availability items with dynamic row controls and live quantity counters.
+                </p>
+              </div>
+              <button onClick={handleAddResourceRow} className="gov-btn gov-btn-teal">
+                + Add Dynamic Resource Row
+              </button>
+            </div>
+
+            <table className="gov-table">
+              <thead>
+                <tr>
+                  <th>Category</th>
+                  <th>Item Name</th>
+                  <th>Quantity Available</th>
+                  <th>Live Quantity Controls</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {resources.map(r => (
+                  <tr key={r.id}>
+                    <td><span className="gov-badge gov-badge-aging">{r.type}</span></td>
+                    <td><strong>{r.name}</strong></td>
+                    <td><strong style={{ fontSize: '1.1rem', color: r.qty > 0 ? 'var(--uwin-emerald)' : 'var(--uwin-danger)' }}>{r.qty}</strong></td>
+                    <td>
+                      <div style={{ display: 'flex', gap: '6px' }}>
+                        <button
+                          onClick={() => updateResourceQty(r.id, -1)}
+                          className="gov-btn gov-btn-secondary"
+                          style={{ padding: '2px 10px', fontSize: '0.85rem' }}
+                        >
+                          -
+                        </button>
+                        <button
+                          onClick={() => updateResourceQty(r.id, 1)}
+                          className="gov-btn gov-btn-secondary"
+                          style={{ padding: '2px 10px', fontSize: '0.85rem' }}
+                        >
+                          +
+                        </button>
+                      </div>
+                    </td>
+                    <td>
+                      <span className={`gov-badge ${r.status === 'Available' ? 'gov-badge-fresh' : 'gov-badge-stale'}`}>
+                        {r.status}
+                      </span>
+                    </td>
+                    <td>
+                      <div style={{ display: 'flex', gap: '6px' }}>
+                        <button
+                          onClick={() => toggleResourceStatus(r.id)}
+                          className={`gov-btn ${r.status === 'Available' ? 'gov-btn-danger' : 'gov-btn-success'}`}
+                          style={{ padding: '2px 8px', fontSize: '0.75rem' }}
+                        >
+                          Toggle
+                        </button>
+                        <button
+                          onClick={() => handleDeleteResourceRow(r.id)}
+                          className="gov-btn gov-btn-danger"
+                          style={{ padding: '2px 8px', fontSize: '0.75rem' }}
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {/* Tab 2: Dynamic Vaccination Stock Panel */}
+        {activeTab === 'vaccines' && (
+          <div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <div>
+                <h4 style={{ color: 'var(--uwin-navy)', margin: 0 }}>
+                  U-WIN Child &amp; Maternal Vaccination Stock Roster
+                </h4>
+              </div>
+              <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                <SimulatedBadge adapterName="U-WIN adapter" />
+                <button onClick={handleAddVaccineRow} className="gov-btn gov-btn-teal">
+                  + Add Dynamic Vaccine Row
+                </button>
+              </div>
+            </div>
+
+            <table className="gov-table">
+              <thead>
+                <tr>
+                  <th>Vaccine Name</th>
+                  <th>Target Group</th>
+                  <th>Vial Doses Available</th>
+                  <th>Dose Adjustments</th>
+                  <th>Stock Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {vaccines.map(v => (
+                  <tr key={v.id}>
+                    <td><strong>{v.name}</strong></td>
+                    <td>{v.target}</td>
+                    <td><strong style={{ fontSize: '1.1rem', color: v.doses > 0 ? 'var(--uwin-emerald)' : 'var(--uwin-danger)' }}>{v.doses} doses</strong></td>
+                    <td>
+                      <div style={{ display: 'flex', gap: '6px' }}>
+                        <button
+                          onClick={() => updateVaccineDoses(v.id, -10)}
+                          className="gov-btn gov-btn-secondary"
+                          style={{ padding: '2px 8px', fontSize: '0.82rem' }}
+                        >
+                          -10
+                        </button>
+                        <button
+                          onClick={() => updateVaccineDoses(v.id, 10)}
+                          className="gov-btn gov-btn-secondary"
+                          style={{ padding: '2px 8px', fontSize: '0.82rem' }}
+                        >
+                          +10
+                        </button>
+                      </div>
+                    </td>
+                    <td>
+                      <span className={`gov-badge ${v.status === 'In Stock' ? 'gov-badge-fresh' : 'gov-badge-stale'}`}>
+                        {v.status}
+                      </span>
+                    </td>
+                    <td>
+                      <div style={{ display: 'flex', gap: '6px' }}>
+                        <button
+                          onClick={() => toggleVaccineStatus(v.id)}
+                          className={`gov-btn ${v.status === 'In Stock' ? 'gov-btn-danger' : 'gov-btn-success'}`}
+                          style={{ padding: '2px 8px', fontSize: '0.75rem' }}
+                        >
+                          Toggle
+                        </button>
+                        <button
+                          onClick={() => handleDeleteVaccineRow(v.id)}
+                          className="gov-btn gov-btn-danger"
+                          style={{ padding: '2px 8px', fontSize: '0.75rem' }}
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {/* Tab 3: Portal Registered Patients */}
+        {activeTab === 'patients' && (
+          <div>
+            <h4 style={{ color: 'var(--uwin-navy)', marginBottom: '14px' }}>
+              Portal Registered Patients Directory ({registeredPatients.length} Records)
+            </h4>
+            <p style={{ fontSize: '0.85rem', color: 'var(--uwin-text-muted)', marginBottom: '16px' }}>
+              Live patient database registered across self-service portal and ASHA-assisted registration desks.
+            </p>
+
+            {registeredPatients.length === 0 ? (
+              <p style={{ color: 'var(--uwin-text-muted)', padding: '20px 0' }}>No registered patient records found.</p>
+            ) : (
+              <table className="gov-table">
+                <thead>
+                  <tr>
+                    <th>Patient ID</th>
+                    <th>ABHA ID</th>
+                    <th>Full Name</th>
+                    <th>Phone</th>
+                    <th>Village</th>
+                    <th>Blood Group</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {registeredPatients.map((p) => (
+                    <tr key={p.patient_id}>
+                      <td><strong>{p.patient_id}</strong></td>
+                      <td><span className="gov-badge gov-badge-aging">{p.abha_id}</span></td>
+                      <td><strong>{p.name}</strong></td>
+                      <td>{p.phone || 'N/A'}</td>
+                      <td>{p.village || 'Satara'}</td>
+                      <td><strong style={{ color: 'var(--uwin-teal)' }}>{p.blood_group || 'O+'}</strong></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+        )}
+
+        {/* Tab 4: Daily Appointment Tracker / assigned today */}
+        {activeTab === 'daily_tracker' && (
+          <div>
+            <h4 style={{ color: 'var(--uwin-navy)', marginBottom: '14px' }}>
+              Daily Assigned Patients &amp; Appointment Progress Tracker
+            </h4>
+            <p style={{ fontSize: '0.85rem', color: 'var(--uwin-text-muted)', marginBottom: '16px' }}>
+              Live tracker for all consultations assigned to this facility today.
+            </p>
+
+            {appointments.length === 0 ? (
+              <p style={{ color: 'var(--uwin-text-muted)', padding: '20px 0' }}>No appointments tracked for today.</p>
+            ) : (
+              appointments.map(apt => (
+                <div key={apt.appointment_id} style={{ border: '1px solid var(--uwin-border)', borderRadius: '8px', padding: '16px', marginBottom: '16px', backgroundColor: '#FFFFFF' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                    <div>
+                      <strong>Token #{apt.token_number || 1}</strong> — Patient: <strong>{apt.patient_name || 'Sunanda Kamble'}</strong> ({apt.patient_phone})<br/>
+                      <span style={{ fontSize: '0.85rem', color: 'var(--uwin-text-muted)' }}>Assigned Doctor: {apt.doctor_name || 'Medical Officer'} | Scheduled: {apt.date} {apt.time}</span>
+                    </div>
+                  </div>
+                  <AppointmentTrackerStepper appointment={apt} />
+                </div>
+              ))
+            )}
+          </div>
+        )}
+
+        {/* Tab 5: Excel Roster Upload */}
+        {activeTab === 'excel' && (
+          <div style={{ maxWidth: '650px' }}>
+            <h4 style={{ color: 'var(--uwin-navy)', marginBottom: '10px' }}>
+              Doctor Availability Roster Excel Upload
+            </h4>
+            <p style={{ fontSize: '0.85rem', color: 'var(--uwin-text-muted)', marginBottom: '15px' }}>
+              Upload weekly duty schedule (.xlsx or .csv) to bulk update doctor dates and OPD slots.
+            </p>
+
+            <div style={{ border: '2px dashed var(--uwin-border)', padding: '35px', textAlign: 'center', borderRadius: '12px', backgroundColor: '#F8FAFC' }}>
+              <input
+                type="file"
+                accept=".xlsx, .xls, .csv"
+                onChange={handleFileUpload}
+                style={{ display: 'none' }}
+                id="excelUploadInput"
+              />
+              <label htmlFor="excelUploadInput" className="gov-btn gov-btn-teal" style={{ cursor: 'pointer', padding: '12px 24px' }}>
+                Choose Excel / CSV File
+              </label>
+              <p style={{ fontSize: '0.8rem', color: 'var(--uwin-text-muted)', marginTop: '12px' }}>
+                Required Headers: Doctor_ID, Doctor_Name, Specialty, Date, Slot_Time, Status
+              </p>
+            </div>
+
+            {uploadedDoctors.length > 0 && (
+              <div style={{ marginTop: '30px' }}>
+                <h5 style={{ color: 'var(--uwin-navy)', marginBottom: '10px' }}>
+                  Successfully Uploaded & Synchronized Doctors ({[...new Set(uploadedDoctors.map(d => d.Doctor_ID))].length})
+                </h5>
+                <table className="gov-table" style={{ fontSize: '0.85rem' }}>
+                  <thead>
+                    <tr>
+                      <th>Doctor ID</th>
+                      <th>Name</th>
+                      <th>Specialty</th>
+                      <th>Date</th>
+                      <th>Slot</th>
+                      <th>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {uploadedDoctors.map((doc, idx) => (
+                      <tr key={idx}>
+                        <td><strong>{doc.Doctor_ID}</strong></td>
+                        <td>{doc.Doctor_Name || 'Unknown'}</td>
+                        <td>{doc.Specialty || 'General'}</td>
+                        <td>{doc.Date}</td>
+                        <td><strong>{doc.Slot_Time}</strong></td>
+                        <td>
+                          <span className={`gov-badge ${doc.Status?.toLowerCase() === 'unavailable' ? 'gov-badge-danger' : 'gov-badge-success'}`}>
+                            {doc.Status || 'Available'}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* QR Scanner Modal */}
+      {showQrModal && (
+        <QrScannerModal
+          title="Facility Reception Desk QR Scanner"
+          subtitle="Scan patient appointment QR code to confirm desk arrival"
+          onScanSuccess={handleQrVerified}
+          onClose={() => setShowQrModal(false)}
+        />
+      )}
+    </div>
+  );
+}\nclient\src\views\FaqPage.jsx:1 -> import React, { useState } from 'react';
+
+export default function FaqPage() {
+  const [openFaq, setOpenFaq] = useState(null);
+
+  const faqs = [
+    {
+      id: 1,
+      question: 'What is AarogyaRakshak 2.0?',
+      answer: 'AarogyaRakshak 2.0 is an offline-first, ASHA-worker-assisted rural healthcare interoperability platform developed for the Public Health Department, Government of Maharashtra. It bridges existing digital health portals (U-WIN, e-Aushadhi, eSanjeevani, ABDM) without replacing them.',
+    },
+    {
+      id: 2,
+      question: 'How do rural citizens without smartphones or internet access use the platform?',
+      answer: 'Rural citizens are assisted directly by village ASHA health workers who operate the offline PWA. Additionally, patients receive automated interactive IVR voice calls and SMS tokens in local languages (Marathi/Hindi) on basic feature phones.',
+    },
+    {
+      id: 3,
+      question: 'What happens when there is no cellular or internet connectivity in remote villages?',
+      answer: 'The application operates 100% offline using IndexedDB storage. ASHA workers can register patients, log ANC visits, and run triage evaluation offline. All queued actions flush automatically to the central server when connectivity is restored, backed by last-write-wins conflict auditing.',
+    },
+    {
+      id: 4,
+      question: 'How are emergency medical situations handled?',
+      answer: 'The Emergency SOS Escalation tool uses GPS location to identify nearby facilities currently accepting emergency cases. It dispatches a digital escalation ticket to the District Health Command Center and notifies local PHC emergency teams.',
+    },
+    {
+      id: 5,
+      question: 'What occurs when a Primary Health Centre doctor is unavailable?',
+      answer: 'When a Medical Officer marks themselves unavailable, scheduled appointments are auto-cancelled and patients receive immediate automated IVR voice notifications. The Reappointment Engine evaluates alternative nearby slots ranked by specialty match, facility readiness score, and distance.',
+    },
+    {
+      id: 6,
+      question: 'How does AarogyaRakshak integrate with government systems like ABDM, U-WIN, and e-Aushadhi?',
+      answer: 'AarogyaRakshak utilizes standardized mock API adapters matching official government schemas. It retrieves child immunisation due-lists from U-WIN, queries live pharmacy stock from e-Aushadhi, fetches teleconsultation slots from eSanjeevani, and generates FHIR-shaped longitudinal care passports linked with ABHA IDs.',
+    },
+    {
+      id: 7,
+      question: 'How does QR code scanning work in Primary Health Centres?',
+      answer: 'Primary Health Centres utilize a 2-stage verification system: (1) Facility Staff scan the patient appointment QR code upon arrival at the OPD desk to mark status as Arrived; (2) The Medical Officer confirms consultation room arrival and completion in their doctor portal, recording Care Given and attaching structured e-prescriptions.',
+    },
+    {
+      id: 8,
+      question: 'How is pharmacy stock updated and tracked?',
+      answer: 'Pharmacy staff can upload weekly medicine availability Excel spreadsheets (.xlsx/.csv) or update inventory quantities directly in the Pharmacy Portal. Live stock levels automatically reflect in citizen medicine searches and e-prescription fulfillment.',
+    },
+  ];
+
+  return (
+    <div className="gov-container">
+      {/* Banner */}
+      <div className="gov-card" style={{ background: 'linear-gradient(135deg, #003366 0%, #001A33 100%)', color: '#FFF' }}>
+        <h2 style={{ fontSize: '1.6rem', color: '#D4AF37', marginBottom: '10px' }}>
+          Frequently Asked Questions (FAQ)
+        </h2>
+        <p style={{ fontSize: '0.98rem', color: '#E0E8F0', maxWidth: '850px' }}>
+          Comprehensive operational, technical, and workflow documentation for citizens, health workers, doctors, and district officials.
+        </p>
+      </div>
+
+      {/* Accordion List */}
+      <div className="gov-card">
+        <div className="gov-card-header">
+          <div className="gov-card-title">System &amp; Interoperability FAQ</div>
+        </div>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          {faqs.map((faq) => {
+            const isOpen = openFaq === faq.id;
+            return (
+              <div
+                key={faq.id}
+                style={{
+                  border: '1px solid var(--gov-border)',
+                  borderRadius: '4px',
+                  backgroundColor: isOpen ? '#FAFBFD' : '#FFF',
+                  overflow: 'hidden',
+                  transition: 'background-color 0.2s',
+                }}
+              >
+                <button
+                  onClick={() => setOpenFaq(isOpen ? null : faq.id)}
+                  style={{
+                    width: '100%',
+                    padding: '14px 18px',
+                    textAlign: 'left',
+                    background: 'none',
+                    border: 'none',
+                    fontSize: '0.95rem',
+                    fontWeight: '700',
+                    color: 'var(--gov-blue-primary)',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    justify: 'space-between',
+                    alignItems: 'center',
+                  }}
+                >
+                  <span>{faq.id}. {faq.question}</span>
+                  <span style={{ fontSize: '1.2rem', marginLeft: '10px' }}>{isOpen ? '−' : '+'}</span>
+                </button>
+
+                {isOpen && (
+                  <div style={{ padding: '0 18px 16px 18px', fontSize: '0.88rem', color: 'var(--gov-text-dark)', lineHeight: '1.6' }}>
+                    {faq.answer}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}\nclient\src\views\Homepage.jsx:1 -> import React, { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import SimulatedBadge from '../components/SimulatedBadge';
+
+export default function Homepage() {
+  const [medicineQuery, setMedicineQuery] = useState('');
+  const [searchResults, setSearchResults] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [prescriptionFile, setPrescriptionFile] = useState(null);
+  const [parsingPrescription, setParsingPrescription] = useState(false);
+  const [openFaq, setOpenFaq] = useState(null);
+  const [lang, setLang] = useState('en');
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const handleLang = (e) => setLang(e.detail);
+    window.addEventListener('languageChange', handleLang);
+    return () => window.removeEventListener('languageChange', handleLang);
+  }, []);
+
+  const handleSearchMedicine = async (queryToSearch) => {
+    const q = (queryToSearch || medicineQuery).trim();
+    if (!q) return;
+    setLoading(true);
+    try {
+      const res = await fetch(`http://localhost:3001/api/stock/search/${encodeURIComponent(q)}`);
+      const data = await res.json();
+      setSearchResults(data);
+    } catch (err) {
+      console.error('Medicine search error:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handlePrescriptionUpload = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setPrescriptionFile(file);
+    setParsingPrescription(true);
+
+    setTimeout(() => {
+      setParsingPrescription(false);
+      const parsedMed = 'Paracetamol';
+      setMedicineQuery(parsedMed);
+      handleSearchMedicine(parsedMed);
+    }, 1200);
+  };
+
+  const texts = {
+    en: {
+      heroTitle: 'Rural Healthcare Interoperability & Continuity of Care',
+      heroSubtitle: 'Empowering ASHA health workers, PHC doctors, retail pharmacies, and rural citizens with offline-first digital triage, smart scheduling, longitudinal care records, and automated reminders.',
+      loginBtn: 'Portal Login / Access Desk',
+      registerBtn: 'New Registration',
+      bookBtn: 'Book Doctor Appointment',
+      medSearchTitle: 'Real-Time Pharmacy Stock & Prescription Search',
+      medSearchDesc: 'Search drug availability across Primary Health Centres and retail pharmacies in Maharashtra or upload a doctor prescription file to auto-parse available stock.',
+    },
+    hi: {
+      heroTitle: 'ग्रामीण स्वास्थ्य सेवा सुलभता और निरंतर देखभाल',
+      heroSubtitle: 'आशा कार्यकर्ताओं, डॉक्टरों, फार्मास्यूटिकल्स और नागरिकों को डिजिटल ट्राइएज, अपॉइंटमेंट और मेडिसिन स्टॉक की सुविधा प्रदान करना।',
+      loginBtn: 'पोर्टल लॉगिन / प्रवेश',
+      registerBtn: 'नया पंजीकरण',
+      bookBtn: 'अपॉइंटमेंट बुक करें',
+      medSearchTitle: 'रियल-टाइम दवा स्टॉक और पर्ची खोज',
+      medSearchDesc: 'महाराष्ट्र के प्राथमिक स्वास्थ्य केंद्रों और फार्मेसियों में दवा की उपलब्धता खोजें या पर्ची अपलोड करें।',
+    },
+    mr: {
+      heroTitle: 'ग्रामीण आरोग्य सेवा आणि सातत्यपूर्ण काळजी',
+      heroSubtitle: 'आशा सेविका, वैद्यकीय अधिकारी, औषध विक्रेते आणि ग्रामीण नागरिकांना डिजिटल ट्रायज आणि औषध उपलब्धतेची सुविधा.',
+      loginBtn: 'पोर्टल लॉगिन / प्रवेश',
+      registerBtn: 'नवीन नोंदणी',
+      bookBtn: 'अपॉइंटमेंट नोंदवा',
+      medSearchTitle: 'वास्तविक वेळेत औषध साठा आणि प्रिस्क्रिप्शन शोध',
+      medSearchDesc: 'प्राथमिक आरोग्य केंद्र आणि फार्मसी मधील औषध साठा शोधा किंवा प्रिस्क्रिप्शन अपलोड करा.',
+    },
+  };
+
+  const t = texts[lang] || texts.en;
+
+  const faqs = [
+    {
+      id: 1,
+      question: 'What is AarogyaRakshak 2.0?',
+      answer: 'AarogyaRakshak 2.0 is an offline-first, ASHA-worker-assisted rural healthcare interoperability platform developed for Public Health Department, Government of Maharashtra. It bridges existing digital health portals (U-WIN, e-Aushadhi, eSanjeevani, ABDM) without replacing them.',
+    },
+    {
+      id: 2,
+      question: 'How do rural citizens without smartphones or internet access use the platform?',
+      answer: 'Rural citizens are assisted directly by village ASHA health workers who operate the offline PWA. Additionally, patients receive automated interactive IVR voice calls and SMS tokens in local languages (Marathi/Hindi) on basic feature phones.',
+    },
+    {
+      id: 3,
+      question: 'What happens when there is no cellular or internet connectivity in remote villages?',
+      answer: 'The application operates 100% offline using IndexedDB storage. ASHA workers can register patients, log ANC visits, and run triage evaluation offline. All queued actions flush automatically to the central server when connectivity is restored, backed by last-write-wins conflict auditing.',
+    },
+    {
+      id: 4,
+      question: 'How are emergency medical situations handled?',
+      answer: 'The Emergency SOS Escalation tool uses GPS location to identify nearby facilities currently accepting emergency cases. It dispatches a digital escalation ticket to the District Health Command Center and notifies local PHC emergency teams.',
+    },
+    {
+      id: 5,
+      question: 'What occurs when a Primary Health Centre doctor is unavailable?',
+      answer: 'When a Medical Officer marks themselves unavailable, scheduled appointments are auto-cancelled and patients receive immediate automated IVR voice notifications. The Reappointment Engine evaluates alternative nearby slots ranked by specialty match, facility readiness score, and distance.',
+    },
+    {
+      id: 6,
+      question: 'How does AarogyaRakshak integrate with government systems like ABDM, U-WIN, and e-Aushadhi?',
+      answer: 'AarogyaRakshak utilizes standardized mock API adapters matching official government schemas. It retrieves child immunisation due-lists from U-WIN, queries live pharmacy stock from e-Aushadhi, fetches teleconsultation slots from eSanjeevani, and generates FHIR-shaped longitudinal care passports linked with ABHA IDs.',
+    },
+  ];
+
+  return (
+    <div className="gov-container" style={{ position: 'relative' }}>
+      {/* Floating Circular SOS Button (Right Side Below Profile/Header) */}
+      <Link to="/sos" className="uwin-floating-sos" title="Trigger Emergency SOS Dispatch">
+        <div className="uwin-sos-circle">
+          <span>SOS</span>
+        </div>
+        <span className="uwin-sos-label">Emergency</span>
+      </Link>
+
+      {/* Hero Section — U-WIN Government Theme Banner */}
+      <div className="gov-card" style={{ background: 'linear-gradient(135deg, var(--uwin-navy-dark) 0%, var(--uwin-navy) 100%)', color: '#FFFFFF', padding: '36px 30px', borderRadius: '12px' }}>
+        <h2 style={{ fontSize: '2.1rem', color: '#FFFFFF', marginBottom: '14px', fontWeight: '800' }}>
+          {t.heroTitle}
+        </h2>
+        <p style={{ fontSize: '1.05rem', color: '#CBD5E1', maxWidth: '880px', lineHeight: '1.6', marginBottom: '22px' }}>
+          {t.heroSubtitle}
+        </p>
+
+        {/* Hero Action Buttons Bar */}
+        <div style={{ display: 'flex', gap: '14px', flexWrap: 'wrap' }}>
+          <Link to="/login" className="gov-btn gov-btn-teal" style={{ padding: '11px 24px', fontSize: '0.95rem' }}>
+            {t.loginBtn}
+          </Link>
+          <Link to="/register" className="gov-btn gov-btn-primary" style={{ padding: '11px 24px', fontSize: '0.95rem', backgroundColor: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.3)' }}>
+            {t.registerBtn}
+          </Link>
+          <Link to="/patient/book" className="gov-btn gov-btn-secondary" style={{ padding: '11px 24px', fontSize: '0.95rem' }}>
+            {t.bookBtn}
+          </Link>
+        </div>
+      </div>
+
+      {/* Real-Time Medicine Search & Prescription Upload */}
+      <div className="gov-card">
+        <div className="gov-card-header">
+          <div className="gov-card-title">{t.medSearchTitle}</div>
+          <SimulatedBadge adapterName="e-Aushadhi adapter" />
+        </div>
+        <p style={{ fontSize: '0.88rem', color: 'var(--uwin-text-muted)', marginBottom: '18px' }}>
+          {t.medSearchDesc}
+        </p>
+
+        <div className="gov-grid-2" style={{ gap: '24px', marginBottom: '20px' }}>
+          {/* Manual Query Form */}
+          <div>
+            <label className="gov-label">Search Medicine Name</label>
+            <form onSubmit={(e) => { e.preventDefault(); handleSearchMedicine(); }} style={{ display: 'flex', gap: '10px' }}>
+              <input
+                type="text"
+                className="gov-input"
+                placeholder="Enter medicine (e.g. Paracetamol, Amoxicillin)..."
+                value={medicineQuery}
+                onChange={(e) => setMedicineQuery(e.target.value)}
+              />
+              <button type="submit" className="gov-btn gov-btn-teal" disabled={loading}>
+                {loading ? 'Searching...' : 'Search Stock'}
+              </button>
+            </form>
+          </div>
+
+          {/* Upload Prescription */}
+          <div style={{ borderLeft: '2px solid var(--uwin-border)', paddingLeft: '20px' }}>
+            <label className="gov-label">Upload Doctor Prescription (Image / PDF)</label>
+            <input
+              type="file"
+              className="gov-input"
+              accept="image/*,.pdf"
+              onChange={handlePrescriptionUpload}
+            />
+            {parsingPrescription && (
+              <p style={{ fontSize: '0.82rem', color: 'var(--uwin-teal)', marginTop: '6px', fontWeight: 'bold' }}>
+                Parsing prescription contents &amp; querying pharmacy inventory...
+              </p>
+            )}
+            {prescriptionFile && !parsingPrescription && (
+              <p style={{ fontSize: '0.82rem', color: 'var(--uwin-emerald)', marginTop: '6px', fontWeight: 'bold' }}>
+                Prescription uploaded: {prescriptionFile.name} (Auto-parsed: Paracetamol)
+              </p>
+            )}
+          </div>
+        </div>
+
+        {searchResults && (
+          <div>
+            <h4 style={{ marginBottom: '12px', color: 'var(--uwin-navy)' }}>
+              Stock Search Results for "{searchResults.query}" ({searchResults.local_stock.length} facilities found)
+            </h4>
+
+            {searchResults.local_stock.length === 0 ? (
+              <p style={{ color: 'var(--uwin-text-muted)', fontSize: '0.9rem' }}>No local stock found matching query.</p>
+            ) : (
+              <table className="gov-table">
+                <thead>
+                  <tr>
+                    <th>Facility / Pharmacy Name</th>
+                    <th>Medicine</th>
+                    <th>Available Quantity</th>
+                    <th>Status</th>
+                    <th>Freshness Label</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {searchResults.local_stock.map((item) => (
+                    <tr key={item.id}>
+                      <td><strong>{item.facility_name}</strong></td>
+                      <td>{item.medicine_name}</td>
+                      <td><strong style={{ fontSize: '1.05rem', color: 'var(--uwin-emerald)' }}>{item.quantity} units</strong></td>
+                      <td>
+                        <span className={`gov-badge ${item.quantity_status === 'available' ? 'gov-badge-fresh' : 'gov-badge-stale'}`}>
+                          {item.quantity_status}
+                        </span>
+                      </td>
+                      <td>
+                        <span className={`gov-badge gov-badge-${item.freshness}`}>
+                          {item.label}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* 6 Role Portals Grid */}
+      <div className="gov-card">
+        <div className="gov-card-header">
+          <div className="gov-card-title">Role-Based Portals &amp; Entry Points</div>
+        </div>
+
+        <div className="gov-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))' }}>
+          <div className="gov-stat-box" style={{ cursor: 'pointer', borderLeftColor: 'var(--uwin-navy)' }} onClick={() => navigate('/login?role=patient')}>
+            <h4 style={{ color: 'var(--uwin-navy)' }}>Patient Portal</h4>
+            <p style={{ fontSize: '0.82rem', color: 'var(--uwin-text-muted)', marginTop: '5px' }}>
+              View Care Passport, upcoming appointments, vaccination tracker, and chronic health readings.
+            </p>
+          </div>
+
+          <div className="gov-stat-box" style={{ cursor: 'pointer', borderLeftColor: 'var(--uwin-teal)' }} onClick={() => navigate('/login?role=asha')}>
+            <h4 style={{ color: 'var(--uwin-teal)' }}>ASHA Worker Portal</h4>
+            <p style={{ fontSize: '0.82rem', color: 'var(--uwin-text-muted)', marginTop: '5px' }}>
+              Assisted triage, patient search roster, priority queue follow-ups, and booking on behalf of citizens.
+            </p>
+          </div>
+
+          <div className="gov-stat-box" style={{ cursor: 'pointer', borderLeftColor: 'var(--uwin-emerald)' }} onClick={() => navigate('/login?role=doctor')}>
+            <h4 style={{ color: 'var(--uwin-emerald)' }}>Medical Officer / Doctor</h4>
+            <p style={{ fontSize: '0.82rem', color: 'var(--uwin-text-muted)', marginTop: '5px' }}>
+              OPD queue, patient history, e-prescriptions, and mark availability with automated patient notifications.
+            </p>
+          </div>
+
+          <div className="gov-stat-box" style={{ cursor: 'pointer', borderLeftColor: 'var(--uwin-blue-light)' }} onClick={() => navigate('/login?role=facility_staff')}>
+            <h4 style={{ color: 'var(--uwin-blue-light)' }}>Facility Staff Portal</h4>
+            <p style={{ fontSize: '0.82rem', color: 'var(--uwin-text-muted)', marginTop: '5px' }}>
+              Desk arrival QR scanner, equipment &amp; bed resource counters, and emergency status.
+            </p>
+          </div>
+
+          <div className="gov-stat-box" style={{ cursor: 'pointer', borderLeftColor: '#0EA5E9' }} onClick={() => navigate('/login?role=pharmacy')}>
+            <h4 style={{ color: '#0EA5E9' }}>Retail / PHC Pharmacy</h4>
+            <p style={{ fontSize: '0.82rem', color: 'var(--uwin-text-muted)', marginTop: '5px' }}>
+              Pharmacy stock Excel upload, quantity editor, and live availability updates for citizen searches.
+            </p>
+          </div>
+
+          <div className="gov-stat-box" style={{ cursor: 'pointer', borderLeftColor: '#6366F1' }} onClick={() => navigate('/login?role=district_official')}>
+            <h4 style={{ color: '#6366F1' }}>District Department</h4>
+            <p style={{ fontSize: '0.82rem', color: 'var(--uwin-text-muted)', marginTop: '5px' }}>
+              Read-only referral funnel analytics, facility readiness board, and post-visit voice rating reports.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Frequently Asked Questions */}
+      <div className="gov-card">
+        <div className="gov-card-header">
+          <div className="gov-card-title">Frequently Asked Questions (FAQs)</div>
+        </div>
+        <p style={{ fontSize: '0.88rem', color: 'var(--uwin-text-muted)', marginBottom: '20px' }}>
+          Common questions regarding AarogyaRakshak 2.0 system operation, rural citizen accessibility, and government system interoperability.
+        </p>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          {faqs.map((faq) => {
+            const isOpen = openFaq === faq.id;
+            return (
+              <div
+                key={faq.id}
+                style={{
+                  border: '1px solid var(--uwin-border)',
+                  borderRadius: '8px',
+                  backgroundColor: isOpen ? '#F8FAFC' : '#FFFFFF',
+                  overflow: 'hidden',
+                  transition: 'background-color 0.2s',
+                }}
+              >
+                <button
+                  onClick={() => setOpenFaq(isOpen ? null : faq.id)}
+                  style={{
+                    width: '100%',
+                    padding: '14px 18px',
+                    textAlign: 'left',
+                    background: 'none',
+                    border: 'none',
+                    fontSize: '0.95rem',
+                    fontWeight: '700',
+                    color: 'var(--uwin-navy)',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                  }}
+                >
+                  <span>{faq.id}. {faq.question}</span>
+                  <span style={{ fontSize: '1.2rem', marginLeft: '10px' }}>{isOpen ? '−' : '+'}</span>
+                </button>
+
+                {isOpen && (
+                  <div style={{ padding: '0 18px 16px 18px', fontSize: '0.88rem', color: 'var(--uwin-text-dark)', lineHeight: '1.6' }}>
+                    {faq.answer}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}\nclient\src\views\PatientDashboard.jsx:1 -> import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
+import SimulatedBadge from '../components/SimulatedBadge';
+import AppointmentTrackerStepper from '../components/AppointmentTrackerStepper';
+import PrescriptionPdfModal from '../components/PrescriptionPdfModal';
+
+export default function PatientDashboard({ user }) {
+  const [activeTab, setActiveTab] = useState('appointments');
+  const [patientData, setPatientData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [selectedPrescriptionApt, setSelectedPrescriptionApt] = useState(null);
+
+  useEffect(() => {
+    fetchPatientData();
+  }, [user]);
+
+  const fetchPatientData = async () => {
+    setLoading(true);
+    try {
+      // Find patient record by listing backend patients
+      const res = await fetch('http://localhost:3001/api/patients', {
+        headers: { 'Authorization': `Bearer ${user.token}` },
+      });
+      const list = await res.json();
+      const current = list[0] || null;
+
+      if (current) {
+        const detailRes = await fetch(`http://localhost:3001/api/patients/${current.patient_id}`, {
+          headers: { 'Authorization': `Bearer ${user.token}` },
+        });
+        const detail = await detailRes.json();
+        setPatientData(detail);
+      }
+    } catch (err) {
+      console.error('Patient dashboard fetch error:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return <div className="gov-container"><p>Loading patient care passport &amp; appointments...</p></div>;
+  }
+
+  return (
+    <div className="gov-container">
+      {/* Welcome Banner */}
+      <div className="gov-card" style={{ borderLeft: '6px solid var(--gov-blue-primary)', backgroundColor: 'var(--gov-blue-bg)' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px' }}>
+          <div>
+            <h2 style={{ color: 'var(--gov-blue-dark)' }}>
+              Namaskar, {patientData?.name || user.name}
+            </h2>
+            <p style={{ fontSize: '0.9rem', color: 'var(--gov-text-muted)', marginTop: '4px' }}>
+              Patient ID: <strong>{patientData?.patient_id || 'PATIENT-DEMO-001'}</strong> | ABHA ID: <strong>{patientData?.abha_id || 'ABHA-SYNTH-001'}</strong> | Village: <strong>{patientData?.village || 'Umbraj'}</strong>
+            </p>
+          </div>
+          <div style={{ display: 'flex', gap: '10px' }}>
+            <Link to="/patient/book" className="gov-btn gov-btn-primary">
+              + Book New Appointment
+            </Link>
+            <Link to="/patient/vaccination" className="gov-btn gov-btn-success">
+              + Book Vaccination Slot
+            </Link>
+          </div>
+        </div>
+      </div>
+
+      {/* ABDM Interoperability Badge Banner */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px', padding: '10px 16px', background: '#FFF', border: '1px solid var(--gov-border)', borderRadius: '6px' }}>
+        <span style={{ fontSize: '0.88rem' }}>
+          <strong>ABDM Longitudinal Care Passport:</strong> Health records linked with FHIR interoperability standard.
+        </span>
+        <SimulatedBadge adapterName="ABDM adapter" />
+      </div>
+
+      {/* Tabs Layout */}
+      <div className="gov-card">
+        <div style={{ display: 'flex', gap: '5px', borderBottom: '2px solid var(--gov-border)', marginBottom: '20px', overflowX: 'auto' }}>
+          {[
+            { id: 'appointments', label: 'Appointments & Progress Stepper' },
+            { id: 'vaccination', label: 'Vaccination Tracker (U-WIN)' },
+            { id: 'chronic', label: 'Chronic Care & Readings' },
+            { id: 'details', label: 'Personal & Medical Profile' },
+            { id: 'prescriptions', label: 'Prescriptions & PDF Extractor' },
+          ].map(tab => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              style={{
+                padding: '10px 18px',
+                border: 'none',
+                borderBottom: activeTab === tab.id ? '3px solid var(--gov-blue-primary)' : '3px solid transparent',
+                backgroundColor: activeTab === tab.id ? 'var(--gov-blue-bg)' : 'transparent',
+                color: activeTab === tab.id ? 'var(--gov-blue-primary)' : 'var(--gov-text-dark)',
+                fontWeight: activeTab === tab.id ? '700' : '500',
+                cursor: 'pointer',
+                fontSize: '0.9rem',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Tab 1: Appointments with Amazon Progress Stepper */}
+        {activeTab === 'appointments' && (
+          <div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '15px', alignItems: 'center' }}>
+              <div>
+                <h3 style={{ color: 'var(--gov-blue-primary)', margin: 0 }}>My Appointments &amp; OPD Journey Status</h3>
+                <p style={{ fontSize: '0.82rem', color: 'var(--gov-text-muted)' }}>Real-time Amazon shipping-style progress stepper for each appointment ticket.</p>
+              </div>
+              <Link to="/patient/book" className="gov-btn gov-btn-primary" style={{ fontSize: '0.82rem' }}>
+                + Book New Appointment
+              </Link>
+            </div>
+
+            {(!patientData?.appointments || patientData.appointments.length === 0) ? (
+              <p style={{ color: 'var(--gov-text-muted)', padding: '20px 0' }}>No appointment records found in database.</p>
+            ) : (
+              patientData.appointments.map(apt => (
+                <div key={apt.appointment_id} style={{ border: '1px solid var(--gov-border)', borderRadius: '8px', padding: '16px', marginBottom: '20px', backgroundColor: '#FFFFFF', boxShadow: 'var(--gov-shadow-sm)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '10px' }}>
+                    <div>
+                      <h4 style={{ color: 'var(--gov-blue-primary)', margin: 0 }}>
+                        Token #{apt.token_number || 1} — {apt.doctor_name || 'Assigned Medical Officer'}
+                      </h4>
+                      <p style={{ fontSize: '0.85rem', color: 'var(--gov-text-muted)', marginTop: '2px' }}>
+                        Facility: <strong>{apt.facility_name || 'PHC Karad'}</strong> | Date: <strong>{apt.date} at {apt.time}</strong>
+                      </p>
+                      {apt.symptoms && (
+                        <p style={{ fontSize: '0.85rem', marginTop: '4px' }}>
+                          Symptoms: <em>{apt.symptoms}</em>
+                        </p>
+                      )}
+                    </div>
+
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      {apt.prescription && (
+                        <button
+                          onClick={() => setSelectedPrescriptionApt(apt)}
+                          className="gov-btn gov-btn-success"
+                          style={{ padding: '4px 10px', fontSize: '0.8rem' }}
+                        >
+                          Export / Download PDF Prescription
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Amazon Shipping-Style Progress Stepper */}
+                  <AppointmentTrackerStepper appointment={apt} />
+                </div>
+              ))
+            )}
+          </div>
+        )}
+
+        {/* Tab 2: Vaccination */}
+        {activeTab === 'vaccination' && (
+          <div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '15px' }}>
+              <h3>Vaccination Tracker (U-WIN Synchronized)</h3>
+              <SimulatedBadge adapterName="U-WIN adapter" />
+            </div>
+
+            {(!patientData?.children || patientData.children.length === 0) ? (
+              <p style={{ color: 'var(--gov-text-muted)' }}>No child beneficiary records linked to this profile.</p>
+            ) : (
+              patientData.children.map(child => (
+                <div key={child.beneficiary_id} style={{ border: '1px solid var(--gov-border)', padding: '15px', borderRadius: '8px', marginBottom: '15px' }}>
+                  <h4>Beneficiary ID: {child.beneficiary_id} (DOB: {child.dob})</h4>
+                  <p style={{ fontSize: '0.88rem', margin: '5px 0' }}>
+                    Due Vaccines: <strong>{child.vaccine_due || 'All up to date'}</strong> | U-WIN Sync: <span className="gov-badge gov-badge-fresh">{child.uwin_sync_status}</span>
+                  </p>
+                  <Link to="/patient/vaccination" className="gov-btn gov-btn-success" style={{ marginTop: '8px', padding: '4px 10px', fontSize: '0.8rem' }}>
+                    Schedule Vaccination Slot
+                  </Link>
+                </div>
+              ))
+            )}
+          </div>
+        )}
+
+        {/* Tab 3: Chronic Care */}
+        {activeTab === 'chronic' && (
+          <div>
+            <h3>Chronic Condition Monitoring</h3>
+            {(!patientData?.chronic || patientData.chronic.length === 0) ? (
+              <p style={{ color: 'var(--gov-text-muted)', marginTop: '10px' }}>No chronic case readings logged.</p>
+            ) : (
+              <table className="gov-table" style={{ marginTop: '10px' }}>
+                <thead>
+                  <tr>
+                    <th>Condition</th>
+                    <th>Reading Value</th>
+                    <th>Reading Date</th>
+                    <th>Threshold Status</th>
+                    <th>Adherence Gaps</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {patientData.chronic.map(c => (
+                    <tr key={c.id}>
+                      <td><strong>{c.condition}</strong></td>
+                      <td>{c.reading_value}</td>
+                      <td>{c.reading_date}</td>
+                      <td>
+                        {c.threshold_breached ? (
+                          <span className="gov-badge gov-badge-stale">THRESHOLD BREACHED</span>
+                        ) : (
+                          <span className="gov-badge gov-badge-fresh">NORMAL</span>
+                        )}
+                      </td>
+                      <td>{c.adherence_gap_count} gap(s)</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+        )}
+
+        {/* Tab 4: Personal & Medical Profile */}
+        {activeTab === 'details' && (
+          <div className="gov-grid-2">
+            <div style={{ backgroundColor: '#FAFBFD', padding: '16px', borderRadius: '8px', border: '1px solid var(--gov-border)' }}>
+              <h4 style={{ color: 'var(--gov-blue-primary)', marginBottom: '12px' }}>Demographic Information</h4>
+              <p><strong>Full Name:</strong> {patientData?.name}</p>
+              <p><strong>Phone Number:</strong> {patientData?.phone || 'N/A'}</p>
+              <p><strong>Village:</strong> {patientData?.village}</p>
+              <p><strong>Guardian Name:</strong> {patientData?.guardian_name || 'N/A'}</p>
+              <p><strong>Guardian Contact:</strong> {patientData?.guardian_contact || 'N/A'}</p>
+              <p><strong>Communication Pref:</strong> {patientData?.communication_preference?.toUpperCase()}</p>
+              <p><strong>Address:</strong> {patientData?.address || 'N/A'}</p>
+            </div>
+
+            <div style={{ backgroundColor: '#FAFBFD', padding: '16px', borderRadius: '8px', border: '1px solid var(--gov-border)' }}>
+              <h4 style={{ color: 'var(--gov-blue-primary)', marginBottom: '12px' }}>Medical Profile &amp; History (eSanjeevani)</h4>
+              <p><strong>Blood Group:</strong> <span className="gov-badge gov-badge-aging">{patientData?.blood_group || 'N/A'}</span></p>
+              <p><strong>Age / DOB:</strong> {patientData?.age || 'N/A'} yrs ({patientData?.dob || 'N/A'})</p>
+              <p><strong>Chronic Conditions:</strong> {patientData?.chronic_conditions || 'None reported'}</p>
+              <p><strong>Known Allergies:</strong> <span style={{ color: patientData?.allergies ? '#C82333' : 'inherit', fontWeight: 'bold' }}>{patientData?.allergies || 'None'}</span></p>
+              <p><strong>Past Medications &amp; Dosages:</strong> {patientData?.past_medications || 'None'}</p>
+              <p><strong>Disability / Mobility Notes:</strong> {patientData?.disability || 'None'}</p>
+            </div>
+          </div>
+        )}
+
+        {/* Tab 5: Digital Prescriptions & PDF Extractor */}
+        {activeTab === 'prescriptions' && (
+          <div>
+            <h3>Medical Prescriptions &amp; Official PDF Extractor</h3>
+            {patientData?.appointments?.filter(a => a.prescription).map(apt => (
+              <div key={apt.appointment_id} style={{ border: '1px solid var(--gov-border)', padding: '16px', borderRadius: '8px', marginTop: '12px', backgroundColor: '#FFF' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div>
+                    <strong>Date:</strong> {apt.date} | <strong>Doctor:</strong> {apt.doctor_name || 'Medical Officer'}
+                  </div>
+                  <button onClick={() => setSelectedPrescriptionApt(apt)} className="gov-btn gov-btn-primary" style={{ padding: '4px 12px', fontSize: '0.8rem' }}>
+                    Open Official e-Prescription PDF
+                  </button>
+                </div>
+                <p style={{ marginTop: '10px', fontSize: '0.92rem', color: 'var(--gov-blue-dark)' }}>
+                  <strong>Prescribed Medications:</strong><br/>
+                  <span style={{ whiteSpace: 'pre-line' }}>{apt.prescription}</span>
+                </p>
+              </div>
+            )) || <p style={{ color: 'var(--gov-text-muted)', marginTop: '10px' }}>No digital prescriptions logged yet.</p>}
+          </div>
+        )}
+      </div>
+
+      {/* Official Government Prescription PDF Modal */}
+      {selectedPrescriptionApt && (
+        <PrescriptionPdfModal
+          appointment={selectedPrescriptionApt}
+          onClose={() => setSelectedPrescriptionApt(null)}
+        />
+      )}
+    </div>
+  );
+}\nclient\src\views\Support.jsx:1 -> import React from 'react';
+import { Link } from 'react-router-dom';
+
+export default function Support() {
+  return (
+    <div className="gov-container">
+      {/* Page Banner */}
+      <div className="gov-card" style={{ background: 'linear-gradient(135deg, #003366 0%, #001A33 100%)', color: '#FFF' }}>
+        <h2 style={{ fontSize: '1.6rem', color: '#D4AF37', marginBottom: '10px' }}>
+          Government Support &amp; Emergency Helplines
+        </h2>
+        <p style={{ fontSize: '0.98rem', color: '#E0E8F0', maxWidth: '850px' }}>
+          Public Health Department, Government of Maharashtra — Official emergency contact directory, toll-free national health helplines, and district support desks.
+        </p>
+      </div>
+
+      {/* Emergency Toll-Free Numbers Grid */}
+      <div className="gov-card">
+        <div className="gov-card-header">
+          <div className="gov-card-title">National &amp; State Emergency Helplines</div>
+        </div>
+
+        <div className="gov-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))' }}>
+          <div className="gov-stat-box" style={{ borderLeftColor: '#C82333' }}>
+            <div className="gov-stat-number" style={{ color: '#C82333' }}>108</div>
+            <div className="gov-stat-label">Maharashtra Emergency Ambulance Service</div>
+            <p style={{ fontSize: '0.82rem', color: 'var(--gov-text-muted)', marginTop: '8px' }}>
+              Free 24x7 emergency medical dispatch, ALS/BLS ambulance response for accident and critical trauma cases.
+            </p>
+          </div>
+
+          <div className="gov-stat-box" style={{ borderLeftColor: 'var(--gov-blue-primary)' }}>
+            <div className="gov-stat-number" style={{ color: 'var(--gov-blue-primary)' }}>104</div>
+            <div className="gov-stat-label">National Health Information Helpline</div>
+            <p style={{ fontSize: '0.82rem', color: 'var(--gov-text-muted)', marginTop: '8px' }}>
+              24x7 medical counseling, disease guidance, blood bank status, and PHC center locations.
+            </p>
+          </div>
+
+          <div className="gov-stat-box" style={{ borderLeftColor: '#E05A10' }}>
+            <div className="gov-stat-number" style={{ color: '#E05A10' }}>1098</div>
+            <div className="gov-stat-label">Childline Support &amp; Protection</div>
+            <p style={{ fontSize: '0.82rem', color: 'var(--gov-text-muted)', marginTop: '8px' }}>
+              National 24x7 emergency phone service for children in need of care, immunisation, and protection.
+            </p>
+          </div>
+
+          <div className="gov-stat-box" style={{ borderLeftColor: '#1E7E34' }}>
+            <div className="gov-stat-number" style={{ color: '#1E7E34' }}>181</div>
+            <div className="gov-stat-label">Maternal &amp; Women Helpline</div>
+            <p style={{ fontSize: '0.82rem', color: 'var(--gov-text-muted)', marginTop: '8px' }}>
+              Maternal health support, institutional delivery transport, and emergency medical assistance for women.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* District Technical Support Desks */}
+      <div className="gov-card">
+        <div className="gov-card-header">
+          <div className="gov-card-title">District Technical &amp; Operational Support Desks</div>
+        </div>
+
+        <table className="gov-table">
+          <thead>
+            <tr>
+              <th>District / Region</th>
+              <th>Support Desk Office</th>
+              <th>Contact Phone</th>
+              <th>Email Address</th>
+              <th>Hours of Operation</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Pune District</strong></td>
+              <td>District Health Office (DHO), Council Building, Pune</td>
+              <td>+91 20 2612 3456</td>
+              <td>dho.pune@maharashtra.gov.in</td>
+              <td>09:00 AM – 06:00 PM</td>
+            </tr>
+            <tr>
+              <td><strong>Nagpur District</strong></td>
+              <td>District Civil Hospital Command Desk, Nagpur</td>
+              <td>+91 712 2567 890</td>
+              <td>dho.nagpur@maharashtra.gov.in</td>
+              <td>09:00 AM – 06:00 PM</td>
+            </tr>
+            <tr>
+              <td><strong>Nashik District</strong></td>
+              <td>District Health Society Office, Old Agra Road, Nashik</td>
+              <td>+91 253 2345 678</td>
+              <td>dho.nashik@maharashtra.gov.in</td>
+              <td>09:00 AM – 06:00 PM</td>
+            </tr>
+            <tr>
+              <td><strong>Aurangabad (Chhatrapati Sambhajinagar)</strong></td>
+              <td>PHC Control Desk, Government Medical College, Chhatrapati Sambhajinagar</td>
+              <td>+91 240 2451 123</td>
+              <td>dho.aurangabad@maharashtra.gov.in</td>
+              <td>09:00 AM – 06:00 PM</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      {/* Immediate Emergency Action Banner */}
+      <div className="gov-card" style={{ borderLeft: '4px solid #C82333', backgroundColor: '#FFF5F5' }}>
+        <h4 style={{ color: '#C82333', marginBottom: '8px' }}>Critical Medical Emergency?</h4>
+        <p style={{ fontSize: '0.88rem', color: 'var(--gov-text-dark)', marginBottom: '15px' }}>
+          If a patient requires immediate emergency dispatch, click below to launch the automated GPS-based Emergency SOS Escalation tool.
+        </p>
+        <Link to="/sos" className="gov-btn gov-btn-danger">
+          Launch Emergency SOS Escalation
+        </Link>
+      </div>
+    </div>
+  );
+}\n

@@ -1,0 +1,52 @@
+[
+  {
+    "user_id": "USER-PATI-99897d74",
+    "role": "patient",
+    "name": "hema",
+    "email": "hema@gmail.com",
+    "phone": "6578976567",
+    "password_hash": "$2a$10$RsdeoDHkRocQ9Ptw9kAJueiUTkaN3vIXYM36QxLbc9BAYywIAbrze",
+    "facility_id": null,
+    "created_at": "2026-09-07 05:54:27"
+  },
+  {
+    "user_id": "USER-ASHA-40dda8c3",
+    "role": "asha",
+    "name": "asha1",
+    "email": "asha1@gmail.com",
+    "phone": "76854568879",
+    "password_hash": "$2a$10$ZqbVp.OYeORFBS0jJEMHBe.Z9cGRpc98de2eznNWPVpT6wet3zVXy",
+    "facility_id": "FAC-DEMO-001",
+    "created_at": "2026-09-07 06:00:30"
+  },
+  {
+    "user_id": "USER-DOCT-1cf9528a",
+    "role": "doctor",
+    "name": "doc1",
+    "email": "doc1@gmail.com",
+    "phone": "76789765443",
+    "password_hash": "$2a$10$o254U2j3GgwGFfJr/F2DO.9bY4MCVu5dVUTCsgWark.h.tfB/uV1K",
+    "facility_id": "FAC-DEMO-002",
+    "created_at": "2026-09-07 06:02:22"
+  },
+  {
+    "user_id": "USER-FACI-e661000d",
+    "role": "facility_staff",
+    "name": "staff",
+    "email": "staff@gmail.com",
+    "phone": "3456789765",
+    "password_hash": "$2a$10$LYisu6GBNZBnlrlWVEMF5eyCKXseW9Ng0B.5dtgkG6FONLgudpXAm",
+    "facility_id": "FAC-DEMO-001",
+    "created_at": "2026-09-07 06:03:56"
+  },
+  {
+    "user_id": "USER-DOCT-295c3df3",
+    "role": "doctor",
+    "name": "Ramesh",
+    "email": "rwam@gmail.com",
+    "phone": "9882780282",
+    "password_hash": "$2a$10$YUmn4ZgeNdOQh78.75Ka0Om.q1BhrVtVphJdXu/c857AOxbKYUFY.",
+    "facility_id": "FAC-DEMO-003",
+    "created_at": "2026-09-07 06:51:11"
+  }
+]
